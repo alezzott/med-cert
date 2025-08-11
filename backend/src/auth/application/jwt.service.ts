@@ -15,7 +15,7 @@ export class JwtService {
       {
         sub: user.id,
         email: user.email,
-        roles: user.roles,
+        role: user.role,
       },
       this.secret,
       { expiresIn: this.expiresIn },

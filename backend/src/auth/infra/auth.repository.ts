@@ -1,26 +1,31 @@
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { UserDocument } from './user.schema';
 import { Injectable } from '@nestjs/common';
 import { User } from '../domain/user.entity';
 import { AuthInterface } from '../domain/auth.interface';
 
 @Injectable()
 export class AuthRepository implements AuthInterface {
-  private users: User[] = [
-    new User(
-      '1',
-      'admin@teste.com',
-      '$2b$10$$2b$10$uQw8kQw8kQw8kQw8kQw8kuQw8kQw8kQw8kQw8kQw8kQw8kQw8kQw8k',
-      'Admin',
-      ['admin'],
-    ),
-    // Adicione outros usuários conforme necessário
-  ];
+  constructor(
+    @InjectModel('User') private readonly userModel: Model<UserDocument>,
+  ) {}
 
-  findByEmail(email: string): Promise<User | null> {
-    return Promise.resolve(this.users.find((u) => u.email === email) || null);
+  async findByEmail(email: string): Promise<User | null> {
+    const doc = await this.userModel.findOne({ email }).exec();
+    return doc
+      ? new User(
+          doc._id.toString(),
+          doc.email,
+          doc.password,
+          doc.name,
+          doc.role,
+        )
+      : null;
   }
 
   async save(user: User): Promise<void> {
-    this.users.push(user);
-    return Promise.resolve();
+    const created = new this.userModel(user);
+    await created.save();
   }
 }

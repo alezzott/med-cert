@@ -4,6 +4,6 @@ export class User {
     public readonly email: string,
     public readonly password: string,
     public readonly name: string,
-    public readonly roles: string[] = [],
+    public readonly role: string = 'COLLABORATOR',
   ) {}
 }
