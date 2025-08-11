@@ -1,0 +1,9 @@
+import { Collaborator } from './collaborator.entity';
+
+export interface CollaboratorRepository {
+  create(collaborator: Collaborator): Promise<Collaborator>;
+  findById(id: string): Promise<Collaborator | null>;
+  findByEmail(email: string): Promise<Collaborator | null>;
+  findAll(): Promise<Collaborator[]>;
+  updateStatus(id: string, status: string): Promise<Collaborator | null>;
+}
