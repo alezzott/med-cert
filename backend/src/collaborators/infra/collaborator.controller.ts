@@ -138,6 +138,10 @@ export class CollaboratorController {
     this.logger.log(
       `Admin alterou status do colaborador ${dto.id} para ${dto.status}`,
     );
+    const exists = await this.useCase.findById(dto.id);
+    if (!exists) {
+      throw new NotFoundException(`Colaborador com id não encontrado`);
+    }
     const collaborator = await this.useCase.updateCollaboratorStatus(
       dto.id,
       dto.status,

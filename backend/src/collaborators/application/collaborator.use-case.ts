@@ -8,6 +8,9 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CollaboratorUseCase {
+  async findById(id: string): Promise<Collaborator | null> {
+    return this.collaboratorService.findById(id);
+  }
   constructor(private readonly collaboratorService: CollaboratorService) {}
 
   async createCollaborator(dto: {
