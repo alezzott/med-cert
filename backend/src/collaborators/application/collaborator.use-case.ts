@@ -44,4 +44,8 @@ export class CollaboratorUseCase {
   async findByEmail(email: string): Promise<Collaborator | null> {
     return this.collaboratorService.findByEmail(email);
   }
+
+  async findByCpf(cpf: string): Promise<Collaborator | null> {
+    return this.collaboratorService.findByCpf(cpf);
+  }
 }

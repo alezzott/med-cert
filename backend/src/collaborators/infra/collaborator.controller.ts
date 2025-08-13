@@ -8,6 +8,9 @@ import {
   Inject,
   LoggerService,
   ConflictException,
+  Query,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/infra/guards/jwt-auth.guard';
 import { Roles } from '../../auth/roles/roles.decorator';
@@ -65,6 +68,32 @@ export class CollaboratorController {
       cpf: c.cpf,
       status: c.status,
     }));
+  }
+
+  @Get('search')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async findByCpf(
+    @Query('cpf') cpf: string,
+  ): Promise<CollaboratorResponseDto | null> {
+    this.logger.log(`Admin buscou colaborador pelo CPF: ${cpf}`);
+
+    if (!cpf) {
+      throw new BadRequestException('CPF é obrigatório');
+    }
+
+    const collaborator = await this.useCase.findByCpf(cpf);
+    if (!collaborator) {
+      throw new NotFoundException(`Colaborador com CPF ${cpf} não encontrado`);
+    }
+
+    return {
+      id: collaborator.id,
+      name: collaborator.name,
+      email: collaborator.email,
+      cpf: collaborator.cpf,
+      status: collaborator.status,
+    };
   }
 
   @Patch('status')

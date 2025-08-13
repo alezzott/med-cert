@@ -34,4 +34,9 @@ export class CollaboratorService {
   async findByEmail(email: string): Promise<Collaborator | null> {
     return this.collaboratorRepository.findByEmail(email);
   }
+
+  async findByCpf(cpf: string): Promise<Collaborator | null> {
+    this.logger.log(`Buscando colaborador por CPF: ${cpf}`);
+    return this.collaboratorRepository.findByCpf(cpf);
+  }
 }

@@ -56,6 +56,11 @@ export class CollaboratorRepositoryImpl implements CollaboratorRepository {
     return docs.map((doc) => this.toCollaborator(doc) as Collaborator);
   }
 
+  async findByCpf(cpf: string): Promise<Collaborator | null> {
+    const doc = await this.collaboratorModel.findOne({ cpf }).exec();
+    return this.toCollaborator(doc);
+  }
+
   async updateStatus(
     id: string,
     status: CollaboratorStatus,

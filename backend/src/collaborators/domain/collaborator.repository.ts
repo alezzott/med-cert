@@ -6,4 +6,5 @@ export interface CollaboratorRepository {
   findByEmail(email: string): Promise<Collaborator | null>;
   findAll(): Promise<Collaborator[]>;
   updateStatus(id: string, status: string): Promise<Collaborator | null>;
+  findByCpf(cpf: string): Promise<Collaborator | null>;
 }
