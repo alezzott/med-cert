@@ -8,12 +8,14 @@ import { LoggerProvider } from './logger/winstor.logger';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CidModule } from './cid/cid.module';
+import { MedicalCertificateModule } from './medical-certificates/medical-certificate.module';
 
 @Module({
   imports: [
     CollaboratorsModule,
     AuthModule,
     CidModule,
+    MedicalCertificateModule,
     MongooseModule.forRoot(process.env.MONGO_URI || ''),
     ConfigModule.forRoot({
       isGlobal: true,

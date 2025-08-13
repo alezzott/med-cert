@@ -1,0 +1,132 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, SortOrder } from 'mongoose';
+import { MedicalCertificateRepository } from '../domain/medical-certificate.repository';
+import { MedicalCertificate } from '../domain/medical-certificate.entity';
+import { MedicalCertificateResponseDto } from '../dto/medical-certificate-response.dto';
+
+import { Logger } from '@nestjs/common';
+import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.dto';
+
+interface PaginationOptions {
+  page?: number;
+  limit?: number;
+  sort?: 'asc' | 'desc';
+}
+
+interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+}
+
+@Injectable()
+export class MedicalCertificateRepositoryImpl
+  implements MedicalCertificateRepository
+{
+  private readonly logger = new Logger(MedicalCertificateRepositoryImpl.name);
+  private readonly DEFAULT_PAGE = 1;
+  private readonly DEFAULT_LIMIT = 10;
+
+  constructor(
+    @InjectModel('MedicalCertificate')
+    private readonly medicalCertificateModel: Model<MedicalCertificate>,
+  ) {}
+
+  async findAll(
+    filter: MedicalCertificateResponseDto,
+    options: PaginationOptions = {},
+  ): Promise<PaginatedResult<MedicalCertificateResponseDto>> {
+    this.logger.log(
+      `[findAll] Listando atestados com filtros: ${JSON.stringify(filter)}, opções: ${JSON.stringify(options)}`,
+      MedicalCertificateRepositoryImpl.name,
+    );
+
+    const query = this.buildQuery(filter);
+    const { limit, skip, sortOrder } = this.getPaginationConfig(options);
+
+    const [data, total] = await Promise.all([
+      this.medicalCertificateModel
+        .find(query)
+        .sort({ issueDate: sortOrder as SortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.medicalCertificateModel.countDocuments(query).exec(),
+    ]);
+
+    return {
+      data: data.map(this.toResponseDto),
+      total,
+    };
+  }
+
+  private buildQuery(
+    filter: MedicalCertificateFilterDto,
+  ): Record<string, unknown> {
+    const query: Record<string, unknown> = {};
+
+    // Mapeamento direto de propriedades simples
+    const simpleFilters = ['collaboratorId', 'cidCode'] as const;
+    simpleFilters.forEach((field) => {
+      if (filter[field]) {
+        query[field] = filter[field];
+      }
+    });
+
+    // Filtro de data mais elegante
+    const dateRange = this.buildDateRange(filter.startDate, filter.endDate);
+    if (dateRange) {
+      query.issueDate = dateRange;
+    }
+
+    return query;
+  }
+
+  private buildDateRange(
+    startDate?: string,
+    endDate?: string,
+  ): Record<string, Date> | null {
+    if (!startDate && !endDate) return null;
+
+    const range: Record<string, Date> = {};
+
+    if (startDate) range.$gte = new Date(startDate);
+    if (endDate) range.$lte = new Date(endDate);
+
+    return range;
+  }
+
+  private getPaginationConfig(options: PaginationOptions) {
+    const page = options.page ?? this.DEFAULT_PAGE;
+    const limit = options.limit ?? this.DEFAULT_LIMIT;
+    const sortOrder = options.sort === 'asc' ? 1 : -1;
+    const skip = (page - 1) * limit;
+
+    return { page, limit, skip, sortOrder };
+  }
+
+  private toResponseDto = (
+    certificate: MedicalCertificate,
+  ): MedicalCertificateResponseDto => {
+    return {
+      id: certificate.id,
+      collaboratorId: certificate.collaboratorId,
+      cidCode: certificate.cidCode,
+      issueDate: certificate.issueDate,
+      leaveDays: certificate.leaveDays,
+      observations: certificate.observations,
+    };
+  };
+
+  async create(certificate: MedicalCertificate): Promise<MedicalCertificate> {
+    const created = new this.medicalCertificateModel({
+      collaboratorId: certificate.collaboratorId,
+      issueDate: certificate.issueDate,
+      leaveDays: certificate.leaveDays,
+      cidCode: certificate.cidCode,
+      observations: certificate.observations,
+    });
+    return created.save();
+  }
+}
