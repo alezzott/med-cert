@@ -19,6 +19,7 @@ import { CollaboratorUseCase } from '../application/collaborator.use-case';
 import { CreateCollaboratorDto } from '../dto/create-collaborator.dto';
 import { UpdateStatusDto } from '../dto/update-status.dto';
 import { CollaboratorResponseDto } from '../dto/collaborator-response.dto';
+import { formatDateTime } from 'src/common/utils/date-format.util';
 
 @Controller('collaborators')
 export class CollaboratorController {
@@ -62,6 +63,10 @@ export class CollaboratorController {
       email: collaborator.email,
       cpf: collaborator.cpf,
       status: collaborator.status,
+      birthDate: formatDateTime(collaborator.birthDate),
+      createdAt: collaborator.createdAt
+        ? formatDateTime(collaborator.createdAt)
+        : '',
     };
   }
 
@@ -84,12 +89,14 @@ export class CollaboratorController {
       limit,
     );
     return {
-      data: collaborators.map((c: CollaboratorResponseDto) => ({
+      data: collaborators.map((c) => ({
         id: c.id,
         name: c.name,
         email: c.email,
         cpf: c.cpf,
         status: c.status,
+        birthDate: formatDateTime(c.birthDate),
+        createdAt: c.createdAt ? formatDateTime(c.createdAt) : '',
       })),
       page,
     };
@@ -118,6 +125,7 @@ export class CollaboratorController {
       email: collaborator.email,
       cpf: collaborator.cpf,
       status: collaborator.status,
+      birthDate: formatDateTime(collaborator.birthDate),
     };
   }
 
@@ -141,6 +149,7 @@ export class CollaboratorController {
       email: collaborator.email,
       cpf: collaborator.cpf,
       status: collaborator.status,
+      birthDate: formatDateTime(collaborator.birthDate),
     };
   }
 }

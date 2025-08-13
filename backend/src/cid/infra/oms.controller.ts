@@ -8,7 +8,7 @@ import {
   LoggerService,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/infra/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/infra/guards/jwt-auth.guard';
 import { OmsService } from '../application/oms.service';
 import { CidResponseDto } from '../dto/oms-response.dto';
 

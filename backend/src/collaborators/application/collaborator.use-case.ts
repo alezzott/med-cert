@@ -17,6 +17,7 @@ export class CollaboratorUseCase {
     birthDate: Date;
     role?: 'ADMIN' | 'COLLABORATOR';
   }): Promise<Collaborator> {
+    const now = new Date();
     const collaborator = new Collaborator(
       '',
       dto.name,
@@ -27,6 +28,7 @@ export class CollaboratorUseCase {
       dto.role === 'ADMIN'
         ? CollaboratorRole.ADMIN
         : CollaboratorRole.COLLABORATOR,
+      now,
     );
     return this.collaboratorService.create(collaborator);
   }

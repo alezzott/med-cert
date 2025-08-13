@@ -28,6 +28,7 @@ export class CollaboratorRepositoryImpl implements CollaboratorRepository {
       doc.birthDate,
       doc.status,
       doc.role as CollaboratorRole,
+      doc.createdAt,
     );
   }
 

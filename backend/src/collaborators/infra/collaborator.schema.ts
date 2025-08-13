@@ -8,6 +8,7 @@ export const CollaboratorSchema = new Schema({
   birthDate: { type: Date, required: true },
   status: { type: String, required: true },
   role: { type: String, required: true },
+  createdAt: { type: Date, required: true, default: Date.now },
 });
 
 export interface CollaboratorDocument extends Document {
@@ -18,4 +19,5 @@ export interface CollaboratorDocument extends Document {
   birthDate: Date;
   status: CollaboratorStatus;
   role: string;
+  createdAt: Date;
 }

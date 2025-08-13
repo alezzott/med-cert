@@ -7,6 +7,7 @@ export class Collaborator {
     public readonly birthDate: Date,
     public readonly status: CollaboratorStatus,
     public readonly role: CollaboratorRole = CollaboratorRole.COLLABORATOR,
+    public readonly createdAt?: Date,
   ) {}
 }
 

@@ -6,4 +6,6 @@ export class CollaboratorResponseDto {
   email: string;
   cpf: string;
   status: CollaboratorStatus;
+  birthDate: string;
+  createdAt?: string;
 }

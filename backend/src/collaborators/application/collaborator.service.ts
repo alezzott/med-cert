@@ -1,6 +1,7 @@
 import { Injectable, Inject, LoggerService } from '@nestjs/common';
 import { CollaboratorRepository } from '../domain/collaborator.repository';
 import { Collaborator } from '../domain/collaborator.entity';
+import { formatDateTime } from 'src/common/utils/date-format.util';
 
 @Injectable()
 export class CollaboratorService {
@@ -12,8 +13,21 @@ export class CollaboratorService {
   ) {}
 
   async create(collaborator: Collaborator): Promise<Collaborator> {
-    this.logger.log(`Criando colaborador: ${collaborator.email}`);
-    return this.collaboratorRepository.create(collaborator);
+    const now = new Date();
+    this.logger.log(
+      `Criando colaborador: ${collaborator.email} em ${formatDateTime(now)}`,
+    );
+    const collaboratorWithDate = new Collaborator(
+      collaborator.id,
+      collaborator.name,
+      collaborator.email,
+      collaborator.cpf,
+      collaborator.birthDate,
+      collaborator.status,
+      collaborator.role,
+      now,
+    );
+    return await this.collaboratorRepository.create(collaboratorWithDate);
   }
 
   async findById(id: string): Promise<Collaborator | null> {
