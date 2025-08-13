@@ -4,6 +4,7 @@ import { MedicalCertificateRepository } from '../domain/medical-certificate.repo
 import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.dto';
 import { CreateMedicalCertificateDto } from '../dto/medical-certificate-create.dto';
 import { MedicalCertificate } from '../domain/medical-certificate.entity';
+import { MedicalCertificateResponseDto } from '../dto/medical-certificate-response.dto';
 
 interface PaginationOptions {
   page: number;
@@ -40,7 +41,9 @@ export class MedicalCertificateService {
     return this.repository.findAll(filterParams, paginationOptions);
   }
 
-  async create(dto: CreateMedicalCertificateDto): Promise<MedicalCertificate> {
+  async create(
+    dto: CreateMedicalCertificateDto,
+  ): Promise<MedicalCertificateResponseDto> {
     this.logCreateOperation();
 
     const certificate = this.createCertificateEntity(dto);

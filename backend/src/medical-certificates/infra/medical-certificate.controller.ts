@@ -46,6 +46,7 @@ export class MedicalCertificateController {
   @Post()
   async create(@Body() dto: CreateMedicalCertificateDto) {
     this.logger.log('Criando novo atestado', 'MedicalCertificateController');
-    return this.useCase.createCertificate(dto);
+    const result = await this.useCase.createCertificate(dto);
+    return result;
   }
 }

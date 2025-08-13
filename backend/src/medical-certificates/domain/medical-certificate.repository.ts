@@ -1,3 +1,4 @@
+import { MedicalCertificateResponseDto } from '../dto/medical-certificate-response.dto';
 import { MedicalCertificate } from './medical-certificate.entity';
 
 export interface MedicalCertificateRepository {
@@ -13,7 +14,12 @@ export interface MedicalCertificateRepository {
       limit?: number;
       sort?: 'asc' | 'desc';
     },
-  ): Promise<{ data: MedicalCertificate[]; total: number }>;
+  ): Promise<{
+    data: MedicalCertificateResponseDto[];
+    total: number;
+  }>;
 
-  create(certificate: MedicalCertificate): Promise<MedicalCertificate>;
+  create(
+    certificate: MedicalCertificate,
+  ): Promise<MedicalCertificateResponseDto>;
 }

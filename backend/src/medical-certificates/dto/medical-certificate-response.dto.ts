@@ -2,7 +2,7 @@ export class MedicalCertificateResponseDto {
   id: string;
   collaboratorId: string;
   cidCode: string;
-  issueDate: Date;
+  issueDate: string;
   leaveDays: number;
   observations?: string;
 }
