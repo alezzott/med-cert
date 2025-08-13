@@ -4,7 +4,7 @@ import { Model, SortOrder } from 'mongoose';
 import { MedicalCertificateRepository } from '../domain/medical-certificate.repository';
 import { MedicalCertificate } from '../domain/medical-certificate.entity';
 import { MedicalCertificateResponseDto } from '../dto/medical-certificate-response.dto';
-import { formatDateTime } from 'src/common/utils/date-format.util';
+import { formatDateTime } from '../../common/utils/date-format.util';
 
 import { Logger } from '@nestjs/common';
 import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.dto';

@@ -19,7 +19,7 @@ import { CollaboratorUseCase } from '../application/collaborator.use-case';
 import { CreateCollaboratorDto } from '../dto/create-collaborator.dto';
 import { UpdateStatusDto } from '../dto/update-status.dto';
 import { CollaboratorResponseDto } from '../dto/collaborator-response.dto';
-import { formatDateTime } from 'src/common/utils/date-format.util';
+import { formatDateTime } from '../../common/utils/date-format.util';
 
 @Controller('collaborators')
 export class CollaboratorController {

@@ -3,11 +3,11 @@ import { MedicalCertificateController } from './infra/medical-certificate.contro
 import { MedicalCertificateService } from './application/medical-certificate.service';
 import { MedicalCertificateUseCase } from './application/medial-certificate.use-case';
 import { MedicalCertificateRepositoryImpl } from './infra/medical-certificate.repository.impl';
-import { LoggerProvider } from 'src/logger/winstor.logger';
+import { LoggerProvider } from '../logger/winstor.logger';
 import { CacheModule } from '@nestjs/cache-manager';
-import { CidModule } from 'src/cid/cid.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MedicalCertificateSchema } from './infra/medical-certificate.schema';
+import { CidModule } from '../cid/cid.module';
 
 @Module({
   imports: [

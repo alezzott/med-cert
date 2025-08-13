@@ -1,7 +1,7 @@
 import { Injectable, Inject, LoggerService } from '@nestjs/common';
 import { CollaboratorRepository } from '../domain/collaborator.repository';
 import { Collaborator } from '../domain/collaborator.entity';
-import { formatDateTime } from 'src/common/utils/date-format.util';
+import { formatDateTime } from '../../common/utils/date-format.util';
 
 @Injectable()
 export class CollaboratorService {

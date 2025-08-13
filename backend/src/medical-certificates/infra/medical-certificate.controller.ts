@@ -38,6 +38,7 @@ export class MedicalCertificateController {
     const result = await this.useCase.listCertificates(filter);
     return {
       data: result.data,
+      total: result.total,
       page,
       limit,
     };

@@ -5,7 +5,7 @@ import { CollaboratorService } from './application/collaborator.service';
 import { CollaboratorUseCase } from './application/collaborator.use-case';
 import { CollaboratorRepositoryImpl } from './infra/collaborator.repository.impl';
 import { CollaboratorSchema } from './infra/collaborator.schema';
-import { LoggerProvider } from 'src/logger/winstor.logger';
+import { LoggerProvider } from '../logger/winstor.logger';
 
 @Module({
   imports: [
