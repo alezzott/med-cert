@@ -56,6 +56,25 @@ export class CollaboratorRepositoryImpl implements CollaboratorRepository {
     return docs.map((doc) => this.toCollaborator(doc) as Collaborator);
   }
 
+  async findAllPaginated(
+    page: number,
+    limit: number,
+  ): Promise<{ collaborators: Collaborator[]; total: number }> {
+    const skip = (page - 1) * limit;
+    const docs = await this.collaboratorModel
+      .find()
+      .skip(skip)
+      .limit(limit)
+      .exec();
+    const total = await this.collaboratorModel.countDocuments().exec();
+    return {
+      collaborators: docs.map(
+        (doc) => this.toCollaborator(doc) as Collaborator,
+      ),
+      total,
+    };
+  }
+
   async findByCpf(cpf: string): Promise<Collaborator | null> {
     const doc = await this.collaboratorModel.findOne({ cpf }).exec();
     return this.toCollaborator(doc);

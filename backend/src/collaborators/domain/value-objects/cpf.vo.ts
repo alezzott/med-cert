@@ -1,4 +1,3 @@
-// Value Object para CPF
 export class CPF {
   private readonly value: string;
 
@@ -10,7 +9,9 @@ export class CPF {
   }
 
   static isValid(value: string): boolean {
-    return /^\d{11}$/.test(value);
+    if (!value) return false;
+    const onlyDigits = value.replace(/\D/g, '');
+    return onlyDigits.length === 11;
   }
 
   toString() {

@@ -35,9 +35,19 @@ export class CollaboratorController {
   ): Promise<CollaboratorResponseDto> {
     this.logger.log(`Admin solicitou criação de colaborador: ${dto.email}`);
 
-    const exists = await this.useCase.findByEmail(dto.email);
-    if (exists) {
+    const { CPF } = await import('../domain/value-objects/cpf.vo');
+    if (!CPF.isValid(dto.cpf)) {
+      throw new BadRequestException('CPF inválido');
+    }
+
+    const existsEmail = await this.useCase.findByEmail(dto.email);
+    if (existsEmail) {
       throw new ConflictException('Já existe um colaborador com esse email.');
+    }
+
+    const existsCpf = await this.useCase.findByCpf(dto.cpf);
+    if (existsCpf) {
+      throw new ConflictException('Já existe um colaborador com esse CPF.');
     }
 
     const collaborator = await this.useCase.createCollaborator({
@@ -58,16 +68,31 @@ export class CollaboratorController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async findAll(): Promise<CollaboratorResponseDto[]> {
-    this.logger.log('Admin solicitou listagem de colaboradores');
-    const collaborators = await this.useCase.listCollaborators();
-    return collaborators.map((c) => ({
-      id: c.id,
-      name: c.name,
-      email: c.email,
-      cpf: c.cpf,
-      status: c.status,
-    }));
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{
+    data: CollaboratorResponseDto[];
+    page: number;
+    limit?: number;
+  }> {
+    this.logger.log(
+      `Admin solicitou listagem de colaboradores - página: ${page}, limite: ${limit}`,
+    );
+    const { collaborators } = await this.useCase.listCollaboratorsPaginated(
+      page,
+      limit,
+    );
+    return {
+      data: collaborators.map((c: CollaboratorResponseDto) => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        cpf: c.cpf,
+        status: c.status,
+      })),
+      page,
+    };
   }
 
   @Get('search')

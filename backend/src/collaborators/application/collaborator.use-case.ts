@@ -34,6 +34,13 @@ export class CollaboratorUseCase {
     return await this.collaboratorService.findAll();
   }
 
+  async listCollaboratorsPaginated(
+    page: number,
+    limit: number,
+  ): Promise<{ collaborators: Collaborator[]; total: number }> {
+    return await this.collaboratorService.findAllPaginated(page, limit);
+  }
+
   async updateCollaboratorStatus(
     id: string,
     status: string,
