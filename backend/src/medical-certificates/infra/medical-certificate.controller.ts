@@ -8,7 +8,7 @@ import {
   Post,
   Body,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/infra/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/infra/guards/jwt-auth.guard';
 import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.dto';
 import { MedicalCertificateResponseDto } from '../dto/medical-certificate-response.dto';
 import { CreateMedicalCertificateDto } from '../dto/medical-certificate-create.dto';
@@ -23,14 +23,24 @@ export class MedicalCertificateController {
   ) {}
 
   @Get()
-  findAll(
-    @Query() filter: MedicalCertificateFilterDto,
-  ): Promise<{ data: MedicalCertificateResponseDto[]; total: number }> {
+  async findAll(@Query() filter: MedicalCertificateFilterDto): Promise<{
+    data: MedicalCertificateResponseDto[];
+    total?: number;
+    page?: number;
+    limit?: number;
+  }> {
     this.logger.log(
       'Listando atestados com filtros',
       'MedicalCertificateController',
     );
-    return this.useCase.listCertificates(filter);
+    const page = filter.page ?? 1;
+    const limit = filter.limit ?? 10;
+    const result = await this.useCase.listCertificates(filter);
+    return {
+      data: result.data,
+      page,
+      limit,
+    };
   }
 
   @Post()
