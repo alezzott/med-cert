@@ -57,7 +57,7 @@ export class CollaboratorUseCase {
     return this.collaboratorService.findByEmail(email);
   }
 
-  async findByCpf(cpf: string): Promise<Collaborator | null> {
-    return this.collaboratorService.findByCpf(cpf);
+  async findByCpf(cpf?: string, name?: string): Promise<Collaborator | null> {
+    return this.collaboratorService.findByCpf(cpf, name);
   }
 }

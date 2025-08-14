@@ -76,8 +76,14 @@ export class CollaboratorRepositoryImpl implements CollaboratorRepository {
     };
   }
 
-  async findByCpf(cpf: string): Promise<Collaborator | null> {
-    const doc = await this.collaboratorModel.findOne({ cpf }).exec();
+  async findByCpf(cpf?: string, name?: string): Promise<Collaborator | null> {
+    if (!cpf && !name) return null;
+
+    const query: Record<string, any> = {};
+    if (cpf) query.cpf = cpf;
+    if (name) query.name = { $regex: name, $options: 'i' };
+
+    const doc = await this.collaboratorModel.findOne(query).exec();
     return this.toCollaborator(doc);
   }
 

@@ -106,17 +106,20 @@ export class CollaboratorController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   async findByCpf(
-    @Query('cpf') cpf: string,
+    @Query('cpf') cpf?: string,
+    @Query('name') name?: string,
   ): Promise<CollaboratorResponseDto | null> {
-    this.logger.log(`Admin buscou colaborador pelo CPF: ${cpf}`);
+    this.logger.log(`Admin buscou colaborador pelo CPF: ${cpf} ou ${name}`);
 
-    if (!cpf) {
-      throw new BadRequestException('CPF é obrigatório');
+    if (!cpf && !name) {
+      throw new BadRequestException('CPF o nome do colaborar é obrigatório');
     }
 
-    const collaborator = await this.useCase.findByCpf(cpf);
+    const collaborator = await this.useCase.findByCpf(cpf, name);
     if (!collaborator) {
-      throw new NotFoundException(`Colaborador com CPF ${cpf} não encontrado`);
+      throw new NotFoundException(
+        `Colaborador com CPF ${cpf} ou ${name} não encontrado`,
+      );
     }
 
     return {
