@@ -4,14 +4,12 @@ import CollaboratorsView from '@/views/CollaboratorsView.vue';
 import Dashboard from '@/views/Dashboard.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
-// Importe suas views/páginas
 const Login = () => import('@/views/LoginView.vue');
 
 function isTokenValid(token: string) {
   if (!token) return false;
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    // exp está em segundos, Date.now() em ms
     return payload.exp * 1000 > Date.now();
   } catch {
     return false;
@@ -32,7 +30,7 @@ const routes = [
   },
   {
     path: '/logout',
-    component: { render: () => null }, // Dummy component to satisfy RouteRecordRaw
+    component: { render: () => null },
     beforeEnter: (to, from, next) => {
       const auth = useAuthStore();
       auth.logout();
