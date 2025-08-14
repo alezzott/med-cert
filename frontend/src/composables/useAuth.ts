@@ -13,10 +13,13 @@ export function useAuth() {
     loading.value = true;
     error.value = '';
     try {
-      const res = await axios.post('http://localhost:4000/auth/login', {
-        email,
-        password,
-      });
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/login`,
+        {
+          email,
+          password,
+        },
+      );
       authStore.setToken(res.data.accessToken);
       console.log('Login realizado com sucesso:', res.data);
       return true;
