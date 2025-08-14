@@ -101,8 +101,8 @@ export class MedicalCertificateService {
       new Date(dto.issueDate),
       dto.leaveDays,
       dto.cidCode,
-      dto.observations ?? '',
       name,
+      dto.observations,
     );
   }
 }

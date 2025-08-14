@@ -135,8 +135,8 @@ export class MedicalCertificateRepositoryImpl
       issueDate: certificate.issueDate,
       leaveDays: certificate.leaveDays,
       cidCode: certificate.cidCode,
-      observations: certificate.observations,
       name: certificate.name,
+      observations: certificate.observations,
     });
     const saved = await created.save();
     return this.toResponseDto(saved);
