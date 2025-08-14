@@ -26,64 +26,17 @@ import {
 } from 'lucide-vue-next';
 import { useUpdateCollaboratorStatus } from '@/composables/useUpdateCollaboratorStatus';
 import Spinner from '@/components/ui/spinner/Spinner.vue';
+import { useCollaborators } from '@/composables/useFetchCollaborators';
+import { toast } from 'vue-sonner';
 
-interface Collaborator {
-  id: string;
-  name: string;
-  email: string;
-  cpf: string;
-  birthDate: string;
-  status: CollaboratorStatus;
-  createdAt: string;
-}
 const { updateStatus } = useUpdateCollaboratorStatus();
-const collaborators = ref<Collaborator[]>([]);
-const loading = ref(false);
-const error = ref('');
+const { collaborators, loading, error, fetchCollaborators } =
+  useCollaborators();
+
 const currentPage = ref(1);
 const pageSize = ref(10);
 const hasNextPage = ref(false);
 const pageSizeOptions = [5, 10, 20, 50];
-
-const fetchCollaborators = async () => {
-  loading.value = true;
-  error.value = '';
-
-  try {
-    const params = new URLSearchParams({
-      page: currentPage.value.toString(),
-      limit: pageSize.value.toString(),
-    });
-
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/collaborators?${params}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar colaboradores');
-    }
-
-    const data = await response.json();
-    if (Array.isArray(data)) {
-      collaborators.value = data;
-      hasNextPage.value = data.length === pageSize.value;
-    } else {
-      collaborators.value = data.data || data;
-      hasNextPage.value = (data.data || data).length === pageSize.value;
-    }
-  } catch (e: any) {
-    error.value = e.message || 'Erro ao carregar dados';
-    collaborators.value = [];
-    hasNextPage.value = false;
-  } finally {
-    loading.value = false;
-  }
-};
 
 watch([currentPage, pageSize], () => {
   fetchCollaborators();
@@ -170,16 +123,30 @@ const columns = [
       const status = row.getValue('status') as CollaboratorStatus;
       const collaborator = row.original;
       const handleToggleStatus = async () => {
-        const newStatus = status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-        const ok = await updateStatus(collaborator.id, newStatus);
-        if (ok) fetchCollaborators();
-        else alert('Erro ao atualizar status');
+        const newStatus =
+          status === CollaboratorStatus.ACTIVE
+            ? CollaboratorStatus.INACTIVE
+            : CollaboratorStatus.ACTIVE;
+
+        const statusText =
+          newStatus === CollaboratorStatus.ACTIVE ? 'ativado' : 'desativado';
+
+        try {
+          const ok = await updateStatus(collaborator.id, newStatus);
+          if (ok) {
+            fetchCollaborators();
+            toast.success(`Colaborador ${statusText} com sucesso!`);
+          } else {
+            toast.error('Erro ao atualizar status do colaborador');
+          }
+        } catch (error) {
+          toast.error('Erro ao atualizar status do colaborador');
+        }
       };
 
       return h(
         Button,
         {
-          size: 'sm',
           variant: status === 'ACTIVE' ? 'default' : 'outline',
           onClick: handleToggleStatus,
           class: 'cursor-pointer',

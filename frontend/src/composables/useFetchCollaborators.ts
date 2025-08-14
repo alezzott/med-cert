@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import type { Collaborator } from '@/interfaces/collaborator';
+import { toast } from 'vue-sonner';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -20,7 +21,7 @@ export function useCollaborators() {
       });
       collaborators.value = res.data.data;
     } catch (e: any) {
-      error.value = 'Erro ao buscar colaboradores';
+      toast.error('Erro ao buscar colaboradores');
       collaborators.value = [];
     } finally {
       loading.value = false;
