@@ -121,7 +121,7 @@ describe('CollaboratorController (integração)', () => {
     });
     const result = await controller.findByCpf('12345678900');
     expect(result).toMatchObject({ id: '1', name: 'João', cpf: '12345678900' });
-    expect(useCase.findByCpf).toHaveBeenCalledWith('12345678900');
+    expect(useCase.findByCpf).toHaveBeenCalledWith('12345678900', undefined);
   });
 
   it('deve atualizar status do colaborador', async () => {
