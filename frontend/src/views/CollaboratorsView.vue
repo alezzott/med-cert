@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { h, onMounted, ref, watch } from 'vue';
 import { getCoreRowModel, useVueTable, FlexRender } from '@tanstack/vue-table';
 
 import Table from '@/components/ui/table/Table.vue';
@@ -24,6 +24,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-vue-next';
+import { useUpdateCollaboratorStatus } from '@/composables/useUpdateCollaboratorStatus';
 
 interface Collaborator {
   id: string;
@@ -34,17 +35,13 @@ interface Collaborator {
   status: CollaboratorStatus;
   createdAt: string;
 }
-
+const { updateStatus } = useUpdateCollaboratorStatus();
 const collaborators = ref<Collaborator[]>([]);
 const loading = ref(false);
 const error = ref('');
-
-// Estados de paginação
 const currentPage = ref(1);
 const pageSize = ref(10);
 const hasNextPage = ref(false);
-
-// Opções de tamanho de página
 const pageSizeOptions = [5, 10, 20, 50];
 
 const fetchCollaborators = async () => {
@@ -71,14 +68,10 @@ const fetchCollaborators = async () => {
     }
 
     const data = await response.json();
-
-    // Se o backend retorna apenas array de dados
     if (Array.isArray(data)) {
       collaborators.value = data;
-      // Se retornar menos itens que o limit, não há próxima página
       hasNextPage.value = data.length === pageSize.value;
     } else {
-      // Se o backend retorna um objeto com dados
       collaborators.value = data.data || data;
       hasNextPage.value = (data.data || data).length === pageSize.value;
     }
@@ -91,12 +84,10 @@ const fetchCollaborators = async () => {
   }
 };
 
-// Watchers para refazer a busca quando mudar página ou tamanho
 watch([currentPage, pageSize], () => {
   fetchCollaborators();
 });
 
-// Funções de navegação
 const goToPage = (page: number) => {
   if (page >= 1) {
     currentPage.value = page;
@@ -107,7 +98,6 @@ const goToFirstPage = () => goToPage(1);
 const goToNextPage = () => goToPage(currentPage.value + 1);
 const goToPrevPage = () => goToPage(currentPage.value - 1);
 const goToLastPage = async () => {
-  // Avança até não ter mais dados
   while (hasNextPage.value) {
     currentPage.value++;
     await fetchCollaborators();
@@ -116,7 +106,7 @@ const goToLastPage = async () => {
 
 const changePageSize = (newSize: number) => {
   pageSize.value = newSize;
-  currentPage.value = 1; // Reset para primeira página
+  currentPage.value = 1;
 };
 
 function parseCustomDate(dateStr: string) {
@@ -134,7 +124,6 @@ function parseCustomDate(dateStr: string) {
   );
 }
 
-// Definir colunas da tabela
 const columns = [
   {
     accessorKey: 'name',
@@ -173,6 +162,33 @@ const columns = [
         : 'Data inválida';
     },
   },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }: any) => {
+      const status = row.getValue('status') as CollaboratorStatus;
+      const collaborator = row.original;
+      const handleToggleStatus = async () => {
+        const newStatus = status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        const ok = await updateStatus(collaborator.id, newStatus);
+        if (ok) fetchCollaborators();
+        else alert('Erro ao atualizar status');
+      };
+
+      return h(
+        Button,
+        {
+          size: 'sm',
+          variant: status === 'ACTIVE' ? 'default' : 'outline',
+          onClick: handleToggleStatus,
+          class: 'cursor-pointer',
+        },
+        {
+          default: () => (status === 'ACTIVE' ? 'Ativo' : 'Inativo'),
+        },
+      );
+    },
+  },
 ];
 
 const table = useVueTable({
@@ -193,19 +209,15 @@ onMounted(() => {
       <AddCollaboratorDialog @saved="fetchCollaborators" />
     </section>
 
-    <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center h-32">
       <div class="text-lg">Carregando...</div>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="error" class="text-red-500 text-center p-4">
       {{ error }}
     </div>
 
-    <!-- Content -->
     <div v-else>
-      <!-- Controles de paginação superiores -->
       <div class="flex justify-between items-center mb-4">
         <div class="flex items-center space-x-2">
           <span class="text-sm text-muted-foreground">Itens por página:</span>
@@ -229,7 +241,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Tabela -->
       <div class="rounded-md border">
         <Table>
           <TableHeader>
@@ -272,9 +283,7 @@ onMounted(() => {
         </Table>
       </div>
 
-      <!-- Paginação simplificada -->
       <div class="flex items-center justify-center space-x-2 py-4">
-        <!-- Primeira página -->
         <Button
           variant="outline"
           size="sm"
@@ -283,8 +292,6 @@ onMounted(() => {
         >
           <ChevronsLeft class="h-4 w-4" />
         </Button>
-
-        <!-- Página anterior -->
         <Button
           variant="outline"
           size="sm"
@@ -293,8 +300,6 @@ onMounted(() => {
         >
           <ChevronLeft class="h-4 w-4" />
         </Button>
-
-        <!-- Indicador de página atual -->
         <div class="flex items-center space-x-2">
           <span class="text-sm">Página</span>
           <div
@@ -303,8 +308,6 @@ onMounted(() => {
             {{ currentPage }}
           </div>
         </div>
-
-        <!-- Próxima página -->
         <Button
           variant="outline"
           size="sm"
@@ -313,8 +316,6 @@ onMounted(() => {
         >
           <ChevronRight class="h-4 w-4" />
         </Button>
-
-        <!-- Adicione este botão após o botão de próxima página -->
         <Button
           variant="outline"
           size="sm"
