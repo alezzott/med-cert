@@ -7,6 +7,7 @@ export const MedicalCertificateSchema = new Schema({
   leaveDays: { type: Number, required: true },
   cidCode: { type: String, required: true },
   observations: { type: String },
+  name: { type: String },
 });
 
 export interface MedicalCertificateDocument extends Document {
@@ -15,4 +16,5 @@ export interface MedicalCertificateDocument extends Document {
   leaveDays: number;
   cidCode: string;
   observations?: string;
+  name: string;
 }

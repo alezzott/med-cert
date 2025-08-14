@@ -5,6 +5,7 @@ export class MedicalCertificate {
     public readonly issueDate: Date,
     public readonly leaveDays: number,
     public readonly cidCode: string,
+    public readonly name: string,
     public readonly observations?: string,
   ) {}
 }

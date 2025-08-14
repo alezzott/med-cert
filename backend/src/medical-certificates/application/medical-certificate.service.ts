@@ -1,5 +1,7 @@
-import { OmsService } from './../../cid/application/oms.service';
 import { Injectable, Inject, LoggerService } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Collaborator } from '../../collaborators/domain/collaborator.entity';
 import { MedicalCertificateRepository } from '../domain/medical-certificate.repository';
 import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.dto';
 import { CreateMedicalCertificateDto } from '../dto/medical-certificate-create.dto';
@@ -29,7 +31,8 @@ export class MedicalCertificateService {
     @Inject('MedicalCertificateRepository')
     private readonly repository: MedicalCertificateRepository,
     @Inject('Logger') private readonly logger: LoggerService,
-    private readonly omsService: OmsService,
+    @InjectModel('Collaborator')
+    private readonly collaboratorModel: Model<Collaborator>,
   ) {}
 
   async findAll(filter: MedicalCertificateFilterDto) {
@@ -46,7 +49,12 @@ export class MedicalCertificateService {
   ): Promise<MedicalCertificateResponseDto> {
     this.logCreateOperation();
 
-    const certificate = this.createCertificateEntity(dto);
+    const collaborator = await this.collaboratorModel
+      .findById(dto.collaboratorId)
+      .lean();
+    const name = collaborator?.name || '';
+
+    const certificate = this.createCertificateEntity(dto, name);
     return this.repository.create(certificate);
   }
 
@@ -85,6 +93,7 @@ export class MedicalCertificateService {
 
   private createCertificateEntity(
     dto: CreateMedicalCertificateDto,
+    name: string,
   ): MedicalCertificate {
     return new MedicalCertificate(
       crypto.randomUUID(),
@@ -92,7 +101,8 @@ export class MedicalCertificateService {
       new Date(dto.issueDate),
       dto.leaveDays,
       dto.cidCode,
-      dto.observations,
+      dto.observations ?? '',
+      name,
     );
   }
 }

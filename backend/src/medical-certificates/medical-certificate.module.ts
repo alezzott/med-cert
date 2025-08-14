@@ -8,6 +8,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MedicalCertificateSchema } from './infra/medical-certificate.schema';
 import { CidModule } from '../cid/cid.module';
+import { CollaboratorSchema } from 'src/collaborators/infra/collaborator.schema';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CidModule } from '../cid/cid.module';
     CidModule,
     MongooseModule.forFeature([
       { name: 'MedicalCertificate', schema: MedicalCertificateSchema },
+      { name: 'Collaborator', schema: CollaboratorSchema },
     ]),
   ],
   controllers: [MedicalCertificateController],

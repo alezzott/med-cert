@@ -8,6 +8,7 @@ import { formatDateTime } from '../../common/utils/date-format.util';
 
 import { Logger } from '@nestjs/common';
 import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.dto';
+import { Collaborator } from 'src/collaborators/domain/collaborator.entity';
 
 interface PaginationOptions {
   page?: number;
@@ -31,6 +32,8 @@ export class MedicalCertificateRepositoryImpl
   constructor(
     @InjectModel('MedicalCertificate')
     private readonly medicalCertificateModel: Model<MedicalCertificate>,
+    @InjectModel('Collaborator')
+    private readonly collaboratorModel: Model<Collaborator>,
   ) {}
 
   async findAll(
@@ -57,7 +60,9 @@ export class MedicalCertificateRepositoryImpl
     ]);
 
     return {
-      data: data.map(this.toResponseDto),
+      data: await Promise.all(
+        data.map((certificate) => this.toResponseDto(certificate)),
+      ),
       total,
     };
   }
@@ -105,18 +110,22 @@ export class MedicalCertificateRepositoryImpl
     return { page, limit, skip, sortOrder };
   }
 
-  private toResponseDto = (
+  private async toResponseDto(
     certificate: MedicalCertificate,
-  ): MedicalCertificateResponseDto => {
+  ): Promise<MedicalCertificateResponseDto> {
+    const collaborator = await this.collaboratorModel
+      .findById(certificate.collaboratorId)
+      .lean();
     return {
       id: certificate.id,
       collaboratorId: certificate.collaboratorId,
+      name: collaborator?.name || '',
       cidCode: certificate.cidCode,
       issueDate: formatDateTime(new Date(certificate.issueDate)),
       leaveDays: certificate.leaveDays,
       observations: certificate.observations,
     };
-  };
+  }
 
   async create(
     certificate: MedicalCertificate,
@@ -127,6 +136,7 @@ export class MedicalCertificateRepositoryImpl
       leaveDays: certificate.leaveDays,
       cidCode: certificate.cidCode,
       observations: certificate.observations,
+      name: certificate.name,
     });
     const saved = await created.save();
     return this.toResponseDto(saved);
