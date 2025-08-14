@@ -28,4 +28,8 @@ export class MedicalCertificateFilterDto {
   @IsOptional()
   @IsString()
   sort?: 'asc' | 'desc';
+
+  @IsOptional()
+  @IsString()
+  name?: string;
 }

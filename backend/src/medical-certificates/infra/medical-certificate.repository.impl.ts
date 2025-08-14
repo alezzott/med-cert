@@ -45,7 +45,7 @@ export class MedicalCertificateRepositoryImpl
       MedicalCertificateRepositoryImpl.name,
     );
 
-    const query = this.buildQuery(filter);
+    const query = await this.buildQuery(filter);
     const { limit, skip, sortOrder } = this.getPaginationConfig(options);
 
     const [data, total] = await Promise.all([
@@ -67,9 +67,7 @@ export class MedicalCertificateRepositoryImpl
     };
   }
 
-  private buildQuery(
-    filter: MedicalCertificateFilterDto,
-  ): Record<string, unknown> {
+  private async buildQuery(filter: MedicalCertificateFilterDto) {
     const query: Record<string, unknown> = {};
 
     const simpleFilters = ['collaboratorId', 'cidCode'] as const;
@@ -82,6 +80,20 @@ export class MedicalCertificateRepositoryImpl
     const dateRange = this.buildDateRange(filter.startDate, filter.endDate);
     if (dateRange) {
       query.issueDate = dateRange;
+    }
+
+    if (filter.name) {
+      const collaborators = await this.collaboratorModel
+        .find({ name: { $regex: filter.name, $options: 'i' } })
+        .select('_id')
+        .lean();
+      const collaboratorIds = collaborators.map((c) => c._id);
+      if (collaboratorIds.length > 0) {
+        query.collaboratorId = { $in: collaboratorIds };
+      } else {
+        // Nenhum colaborador encontrado, retorna vazio
+        query.collaboratorId = null;
+      }
     }
 
     return query;

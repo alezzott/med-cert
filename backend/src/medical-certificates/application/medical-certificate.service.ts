@@ -19,6 +19,7 @@ interface FilterParams {
   cidCode?: string;
   startDate?: Date;
   endDate?: Date;
+  name?: string;
 }
 
 @Injectable()
@@ -78,6 +79,7 @@ export class MedicalCertificateService {
       cidCode: filter.cidCode,
       startDate: filter.startDate ? new Date(filter.startDate) : undefined,
       endDate: filter.endDate ? new Date(filter.endDate) : undefined,
+      name: filter.name,
     };
   }
 
