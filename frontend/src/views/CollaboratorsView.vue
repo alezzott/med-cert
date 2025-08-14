@@ -82,7 +82,6 @@ const fetchCollaborators = async () => {
       collaborators.value = data.data || data;
       hasNextPage.value = (data.data || data).length === pageSize.value;
     }
-
   } catch (e: any) {
     error.value = e.message || 'Erro ao carregar dados';
     collaborators.value = [];
@@ -107,40 +106,33 @@ const goToPage = (page: number) => {
 const goToFirstPage = () => goToPage(1);
 const goToNextPage = () => goToPage(currentPage.value + 1);
 const goToPrevPage = () => goToPage(currentPage.value - 1);
+const goToLastPage = async () => {
+  // Avança até não ter mais dados
+  while (hasNextPage.value) {
+    currentPage.value++;
+    await fetchCollaborators();
+  }
+};
 
 const changePageSize = (newSize: number) => {
   pageSize.value = newSize;
   currentPage.value = 1; // Reset para primeira página
 };
 
-// Computed para informações da paginação
-const startItem = computed(() => {
-  return (currentPage.value - 1) * pageSize.value + 1;
-});
-
-const endItem = computed(() => {
-  return (currentPage.value - 1) * pageSize.value + collaborators.value.length;
-});
-
-const paginationInfo = computed(() => {
-  if (collaborators.value.length === 0) return 'Nenhum resultado encontrado';
-  return `Mostrando ${startItem.value} a ${endItem.value} da página ${currentPage.value}`;
-});
-
-// Computed para páginas visíveis (simplificado)
-const visiblePages = computed(() => {
-  const pages = [];
-  const maxVisible = 5;
-  const start = Math.max(1, currentPage.value - 2);
-  
-  for (let i = start; i < start + maxVisible; i++) {
-    if (i === currentPage.value || (i < currentPage.value + 3 && i > currentPage.value - 3)) {
-      pages.push(i);
-    }
-  }
-  
-  return pages;
-});
+function parseCustomDate(dateStr: string) {
+  if (!dateStr) return null;
+  const [datePart, timePart] = dateStr.split(' - ');
+  const [day, month, year] = datePart.split('/');
+  const [hour, minute, second] = timePart.split(':');
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second),
+  );
+}
 
 // Definir colunas da tabela
 const columns = [
@@ -163,24 +155,22 @@ const columns = [
     accessorKey: 'birthDate',
     header: 'Data de Nascimento',
     cell: ({ row }: any) => {
-      const date = new Date(row.getValue('birthDate'));
-      return date.toLocaleDateString('pt-BR');
-    },
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }: any) => {
-      const status = row.getValue('status') as CollaboratorStatus;
-      return translateStatus(status);
+      const value = row.getValue('birthDate');
+      const date = parseCustomDate(value);
+      return date && !isNaN(date.getTime())
+        ? date.toLocaleDateString('pt-BR')
+        : 'Data inválida';
     },
   },
   {
     accessorKey: 'createdAt',
     header: 'Data de Criação',
     cell: ({ row }: any) => {
-      const date = new Date(row.getValue('createdAt'));
-      return date.toLocaleDateString('pt-BR');
+      const value = row.getValue('createdAt');
+      const date = parseCustomDate(value);
+      return date && !isNaN(date.getTime())
+        ? date.toLocaleString('pt-BR')
+        : 'Data inválida';
     },
   },
 ];
@@ -236,10 +226,6 @@ onMounted(() => {
               </SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <div class="text-sm text-muted-foreground">
-          {{ paginationInfo }}
         </div>
       </div>
 
@@ -311,7 +297,9 @@ onMounted(() => {
         <!-- Indicador de página atual -->
         <div class="flex items-center space-x-2">
           <span class="text-sm">Página</span>
-          <div class="border rounded px-3 py-1 min-w-[3rem] text-center text-sm">
+          <div
+            class="border rounded px-3 py-1 min-w-[3rem] text-center text-sm"
+          >
             {{ currentPage }}
           </div>
         </div>
@@ -325,11 +313,16 @@ onMounted(() => {
         >
           <ChevronRight class="h-4 w-4" />
         </Button>
-      </div>
 
-      <!-- Informações de paginação inferiores -->
-      <div v-if="collaborators.length > 0" class="text-center text-sm text-muted-foreground mt-2">
-        Página {{ currentPage }} • {{ collaborators.length }} itens nesta página
+        <!-- Adicione este botão após o botão de próxima página -->
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="!hasNextPage"
+          @click="goToLastPage"
+        >
+          <ChevronsRight class="h-4 w-4" />
+        </Button>
       </div>
     </div>
   </div>
