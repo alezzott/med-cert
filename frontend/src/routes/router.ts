@@ -1,5 +1,6 @@
 import Layout from '@/layout/Layout.vue';
 import { useAuthStore } from '@/stores/auth.store';
+import CollaboratorsView from '@/views/CollaboratorsView.vue';
 import Dashboard from '@/views/Dashboard.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
@@ -23,7 +24,10 @@ const routes = [
   {
     path: '/dashboard',
     component: Layout,
-    children: [{ path: '', component: Dashboard }],
+    children: [
+      { path: '', component: Dashboard },
+      { path: 'collaborators', component: CollaboratorsView },
+    ],
     meta: { requiresAuth: true },
   },
   {

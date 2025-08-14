@@ -1,12 +1,12 @@
 export const sidebarMenu = [
   {
     name: 'Dashboard',
-    to: '/',
+    to: '/dashboard',
     icon: 'dashboard',
   },
   {
     name: 'Colaboradores',
-    to: '/colaboradores',
+    to: '/dashboard/collaborators',
     icon: 'users',
   },
   {
