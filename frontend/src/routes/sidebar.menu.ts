@@ -11,7 +11,7 @@ export const sidebarMenu = [
   },
   {
     name: 'Atestados',
-    to: '/atestados',
+    to: '/dashboard/medical-certificates',
     icon: 'file-text',
   },
 ];
