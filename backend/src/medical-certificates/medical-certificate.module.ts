@@ -8,7 +8,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MedicalCertificateSchema } from './infra/medical-certificate.schema';
 import { CidModule } from '../cid/cid.module';
-import { CollaboratorSchema } from 'src/collaborators/infra/collaborator.schema';
+import { CollaboratorSchema } from '../collaborators/infra/collaborator.schema';
 
 @Module({
   imports: [

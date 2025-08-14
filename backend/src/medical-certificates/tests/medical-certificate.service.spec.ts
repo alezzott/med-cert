@@ -7,16 +7,27 @@ import { CreateMedicalCertificateDto } from '../dto/medical-certificate-create.d
 describe('MedicalCertificateService', () => {
   let service: MedicalCertificateService;
   let repository: jest.Mocked<MedicalCertificateRepository>;
+  let collaboratorModel: jest.Mocked<any>;
 
   beforeEach(() => {
     repository = {
       findAll: jest.fn() as (this: void, ...args: any[]) => Promise<any>,
       create: jest.fn() as (this: void, ...args: any[]) => Promise<any>,
     } as jest.Mocked<MedicalCertificateRepository>;
+
+    collaboratorModel = {
+      findById: jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          id: 'colab1',
+          name: 'Nome do Colaborador',
+        }),
+      }),
+    };
+
     service = new MedicalCertificateService(
       repository,
       console,
-      {} as unknown as any,
+      collaboratorModel,
     );
   });
 
@@ -49,6 +60,7 @@ describe('MedicalCertificateService', () => {
     };
     repository.create.mockResolvedValue({
       ...cert,
+      name: 'Nome do Colaborador',
       issueDate: formatDateTime(new Date(dto.issueDate)),
     });
     const result = await service.create(dto);
