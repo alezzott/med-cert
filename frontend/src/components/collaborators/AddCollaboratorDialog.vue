@@ -31,10 +31,12 @@ import {
   today,
   getLocalTimeZone,
 } from '@internationalized/date';
+import { useCreateCollaborator } from '@/composables/useCreateCollaborator';
 
 const openDialog = ref(false);
 const saving = ref(false);
 const error = ref('');
+const { createCollaborator, error: apiError } = useCreateCollaborator();
 
 const schema = toTypedSchema(
   z.object({
@@ -78,24 +80,7 @@ const onSubmit = async (formValues: any) => {
       role: 'COLLABORATOR',
     };
 
-    console.log(payload);
-
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/collaborators`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(payload),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error('Erro ao salvar colaborador');
-    }
-
+    await createCollaborator(payload);
     resetForm();
     setValues({
       name: '',
@@ -106,7 +91,7 @@ const onSubmit = async (formValues: any) => {
     openDialog.value = false;
     emit('saved');
   } catch (e: any) {
-    error.value = e.message || 'Erro ao salvar colaborador';
+    error.value = apiError.value || 'Erro ao salvar colaborador';
     return false;
   } finally {
     saving.value = false;
