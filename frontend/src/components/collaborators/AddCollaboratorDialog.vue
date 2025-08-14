@@ -230,7 +230,7 @@ const formatDateForDisplay = (dateString: string) => {
               type="submit"
               form="collaboratorForm"
               :disabled="saving"
-              class="w-full mt-4"
+              class="mt-4"
             >
               <span v-if="saving">Salvando...</span>
               <span v-else>Salvar</span>

@@ -24,6 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import AddCertificateDialog from '@/components/medical-certificates/AddCertificateDialog.vue';
 import { useMedicalCertificates } from '@/composables/useFetchCertificates';
+import Spinner from '@/components/ui/spinner/Spinner.vue';
 
 const { certificates, loading, error, total, fetchCertificates } =
   useMedicalCertificates();
@@ -155,10 +156,7 @@ function openAddCertificateDialog(collaborator: string | null) {
       </Button>
     </section>
 
-    <div v-if="loading" class="flex justify-center items-center h-32">
-      <div class="text-lg">Carregando...</div>
-    </div>
-
+    <Spinner v-if="loading" />
     <div v-else-if="error" class="text-red-500 text-center p-4">
       {{ error }}
     </div>

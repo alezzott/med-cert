@@ -25,6 +25,7 @@ import {
   ChevronsRight,
 } from 'lucide-vue-next';
 import { useUpdateCollaboratorStatus } from '@/composables/useUpdateCollaboratorStatus';
+import Spinner from '@/components/ui/spinner/Spinner.vue';
 
 interface Collaborator {
   id: string;
@@ -209,10 +210,7 @@ onMounted(() => {
       <AddCollaboratorDialog @saved="fetchCollaborators" />
     </section>
 
-    <div v-if="loading" class="flex justify-center items-center h-32">
-      <div class="text-lg">Carregando...</div>
-    </div>
-
+    <Spinner v-if="loading" />
     <div v-else-if="error" class="text-red-500 text-center p-4">
       {{ error }}
     </div>
