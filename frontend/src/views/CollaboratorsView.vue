@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { getCoreRowModel, useVueTable, FlexRender } from '@tanstack/vue-table';
 
 import Table from '@/components/ui/table/Table.vue';
@@ -8,7 +8,7 @@ import TableHeader from '@/components/ui/table/TableHeader.vue';
 import TableRow from '@/components/ui/table/TableRow.vue';
 import TableCell from '@/components/ui/table/TableCell.vue';
 import TableBody from '@/components/ui/table/TableBody.vue';
-import { CollaboratorStatus, translateStatus } from '@/enums/status.enums';
+import { CollaboratorStatus } from '@/enums/status.enums';
 import { Button } from '@/components/ui/button';
 import AddCollaboratorDialog from '@/components/collaborators/AddCollaboratorDialog.vue';
 import {

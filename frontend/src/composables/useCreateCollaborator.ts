@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import axios from 'axios';
 
 export function useCreateCollaborator() {
   const error = ref('');
@@ -6,23 +7,18 @@ export function useCreateCollaborator() {
   async function createCollaborator(payload: any) {
     error.value = '';
     try {
-      const response = await fetch(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/collaborators`,
+        payload,
         {
-          method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-          body: JSON.stringify(payload),
         },
       );
-      if (!response.ok) {
-        throw new Error('Erro ao salvar colaborador');
-      }
-      return await response.json();
+      return response.data;
     } catch (e: any) {
-      error.value = e.message || 'Erro ao salvar colaborador';
+      error.value = e.response?.data?.message || 'Erro ao salvar colaborador';
       throw e;
     }
   }
