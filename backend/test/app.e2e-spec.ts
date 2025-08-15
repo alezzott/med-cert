@@ -9,6 +9,7 @@ describe('App E2E', () => {
   let server: Server;
   let jwt: string;
   let collaboratorId: string;
+  let collaboratorCpf: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -41,6 +42,7 @@ describe('App E2E', () => {
 
   it('POST /collaborators - deve criar colaborador (rota protegida)', async () => {
     const randomCpf = '123456789' + Math.floor(Math.random() * 90 + 10);
+    collaboratorCpf = randomCpf;
     const collaboratorDto = {
       name: 'João',
       email: `joao${Date.now()}@email.com`,
@@ -59,14 +61,14 @@ describe('App E2E', () => {
 
   it('GET /collaborators/:cpf - deve consultar colaborador', async () => {
     const res = await request(server)
-      .get(`/collaborators/search?cpf=12345678900`)
+      .get(`/collaborators/search?cpf=${collaboratorCpf}`)
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
     const { name, cpf } = res.body as {
       name: string;
       cpf: string;
     };
-    expect(cpf).toBe('12345678900');
+    expect(cpf).toBe(collaboratorCpf);
     expect(name).toBe('João');
   });
 
