@@ -11,7 +11,10 @@ import {
 import { JwtAuthGuard } from '../../auth/infra/guards/jwt-auth.guard';
 import { OmsService } from '../application/oms.service';
 import { CidResponseDto } from '../dto/oms-response.dto';
+import { ApiTags } from '@nestjs/swagger';
+import { SearchCidSwagger } from '../docs/cid.swagger';
 
+@ApiTags('cid')
 @Controller('cid')
 @UseGuards(JwtAuthGuard)
 export class CidController {
@@ -21,6 +24,7 @@ export class CidController {
   ) {}
 
   @Get('search')
+  @SearchCidSwagger
   async searchCid(
     @Query('term') term: string,
     @Query('locale') locale?: string,
