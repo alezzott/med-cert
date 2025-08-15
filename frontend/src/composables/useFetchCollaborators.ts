@@ -1,6 +1,6 @@
-import { ref } from 'vue';
-import axios from 'axios';
 import type { Collaborator } from '@/interfaces/collaborator';
+import axios from 'axios';
+import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -10,11 +10,18 @@ export function useCollaborators() {
   const loading = ref(false);
   const error = ref('');
 
-  async function fetchCollaborators() {
+  async function fetchCollaborators(params?: {
+    page?: number;
+    limit?: number;
+  }) {
     loading.value = true;
     error.value = '';
     try {
-      const res = await axios.get(`${API_URL}/collaborators`, {
+      const query = [];
+      if (params?.page) query.push(`page=${params.page}`);
+      if (params?.limit) query.push(`limit=${params.limit}`);
+      const queryString = query.length ? `?${query.join('&')}` : '';
+      const res = await axios.get(`${API_URL}/collaborators${queryString}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },

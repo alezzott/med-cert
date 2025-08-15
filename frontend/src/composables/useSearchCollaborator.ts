@@ -1,50 +1,61 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import { toast } from 'vue-sonner';
 
 export function useCollaboratorSearch() {
-  const cpfSearch = ref('');
-  const cpfLoading = ref(false);
-  const cpfError = ref('');
-  const cpfCollaborator = ref<any>(null);
-  let cpfTimeout: any = null;
+  const searchValue = ref('');
+  const loading = ref(false);
+  const error = ref('');
+  const collaborator = ref<any>(null);
+  let timeout: any = null;
 
-  function searchByCpf(cpf: string) {
-    cpfError.value = '';
-    cpfCollaborator.value = null;
-    cpfSearch.value = cpf;
-    if (cpfTimeout) clearTimeout(cpfTimeout);
+  async function searchCollaborator(value: string) {
+    error.value = '';
+    collaborator.value = null;
+    searchValue.value = value;
+    if (timeout) clearTimeout(timeout);
 
-    if (cpf.length === 11) {
-      cpfTimeout = setTimeout(async () => {
-        cpfLoading.value = true;
-        try {
-          const { data } = await axios.get(
-            `${import.meta.env.VITE_API_URL}/collaborators/search?cpf=${cpf}`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-              },
-            },
-          );
-          if (data && data.id) {
-            cpfCollaborator.value = data;
-          } else {
-            cpfError.value = 'Colaborador não encontrado';
-          }
-        } catch {
-          cpfError.value = 'Erro ao buscar colaborador';
-        } finally {
-          cpfLoading.value = false;
-        }
-      }, 500);
+    if (!value || !value.trim()) {
+      loading.value = false;
+      return;
+    }
+
+    const cpfSanitized = value.replace(/\D/g, '');
+
+    loading.value = true;
+    try {
+      let params;
+      if (cpfSanitized.length === 11) {
+        params = `cpf=${cpfSanitized}`;
+      } else {
+        params = `name=${encodeURIComponent(value)}`;
+      }
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/collaborators/search?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        },
+      );
+      if (data && (data.id || (Array.isArray(data) && data.length))) {
+        collaborator.value = data;
+      } else {
+        error.value = 'Colaborador não encontrado';
+        toast.error(error.value);
+      }
+    } catch (error: any) {
+      toast.error('Erro ao buscar pelo nome ou cpf');
+    } finally {
+      loading.value = false;
     }
   }
 
   return {
-    cpfSearch,
-    cpfLoading,
-    cpfError,
-    cpfCollaborator,
-    searchByCpf,
+    searchValue,
+    loading,
+    error,
+    collaborator,
+    searchCollaborator,
   };
 }
