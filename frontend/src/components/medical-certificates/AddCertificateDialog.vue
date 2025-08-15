@@ -34,8 +34,13 @@ const emit = defineEmits(['update:open', 'saved']);
 
 const dialogOpen = ref(props.open);
 
-const { cpfSearch, cpfLoading, cpfError, cpfCollaborator, searchByCpf } =
-  useCollaboratorSearch();
+const {
+  searchValue: cpfSearch,
+  loading: cpfLoading,
+  error: cpfError,
+  collaborator: cpfCollaborator,
+  searchCollaborator,
+} = useCollaboratorSearch();
 
 const {
   createCertificate,
@@ -128,21 +133,16 @@ function handleCidInput(e: Event) {
   }, 400);
 }
 
-function handleCpfInput(e: Event) {
-  const input = e.target as HTMLInputElement;
-  const value = input.value;
-
-  const maskedValue = applyCpfMask(value);
+function handleCpfInput() {
+  const maskedValue = applyCpfMask(cpfDisplay.value);
   cpfDisplay.value = maskedValue;
 
   const cleanCpf = removeCpfMask(maskedValue);
   cpfSearch.value = cleanCpf;
 
-  if (cleanCpf.length === 11) {
-    searchByCpf(cleanCpf);
+  if (cleanCpf.length >= 3) {
+    searchCollaborator(cleanCpf);
   }
-
-  input.value = maskedValue;
 }
 
 watch(cpfSearch, (val) => {
@@ -242,14 +242,16 @@ onUnmounted(() => {
         <label class="block text-sm font-medium mb-1">
           Buscar colaborador por CPF *
         </label>
-        <input
-          :value="cpfDisplay"
-          @input="handleCpfInput"
-          placeholder="Digite o CPF (ex: 123.456.789-01)"
-          :class="{ 'border-red-500': errors.collaboratorId }"
-          maxlength="14"
-          class="w-full pl-3 pr-10 h-10 rounded-md border"
-        />
+        <section class="flex flex-row gap-3">
+          <input
+            v-model="cpfDisplay"
+            placeholder="Digite o CPF (ex: 123.456.789-01)"
+            :class="{ 'border-red-500': errors.collaboratorId }"
+            maxlength="14"
+            class="w-full pl-3 pr-10 h-10 rounded-md border"
+          />
+          <Button size="lg" @click="handleCpfInput">Buscar</Button>
+        </section>
 
         <div v-if="cpfLoading" class="text-xs text-blue-500 mt-1">
           Buscando colaborador...
