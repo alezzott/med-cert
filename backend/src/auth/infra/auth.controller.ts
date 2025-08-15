@@ -2,7 +2,10 @@ import { Controller, Post, Body, Inject, LoggerService } from '@nestjs/common';
 import { LoginRequestDto } from '../dto/login-request.dto';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { AuthUseCase } from '../application/auth.use-case';
+import { LoginSwagger } from '../docs/auth.swagger';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -11,6 +14,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @LoginSwagger
   async login(@Body() loginDto: LoginRequestDto): Promise<LoginResponseDto> {
     this.logger.log(`Login solicitado para: ${loginDto.email}`);
     return this.authUseCase.login(loginDto);
