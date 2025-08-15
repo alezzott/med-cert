@@ -20,7 +20,15 @@ import { CreateCollaboratorDto } from '../dto/create-collaborator.dto';
 import { UpdateStatusDto } from '../dto/update-status.dto';
 import { CollaboratorResponseDto } from '../dto/collaborator-response.dto';
 import { formatDateTime } from '../../common/utils/date-format.util';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  CreateCollaboratorSwagger,
+  GetAllCollaboratorsSwagger,
+  SearchCollaboratorSwagger,
+  UpdateCollaboratorStatusSwagger,
+} from '../docs/collaborators.swagger';
 
+@ApiTags('collaborators')
 @Controller('collaborators')
 export class CollaboratorController {
   constructor(
@@ -31,6 +39,7 @@ export class CollaboratorController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @CreateCollaboratorSwagger
   async create(
     @Body() dto: CreateCollaboratorDto,
   ): Promise<CollaboratorResponseDto> {
@@ -73,6 +82,7 @@ export class CollaboratorController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @GetAllCollaboratorsSwagger
   async findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
@@ -105,6 +115,7 @@ export class CollaboratorController {
   @Get('search')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @SearchCollaboratorSwagger
   async findByCpf(
     @Query('cpf') cpf?: string,
     @Query('name') name?: string,
@@ -135,6 +146,7 @@ export class CollaboratorController {
   @Patch('status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @UpdateCollaboratorStatusSwagger
   async updateStatus(
     @Body() dto: UpdateStatusDto,
   ): Promise<CollaboratorResponseDto | null> {
