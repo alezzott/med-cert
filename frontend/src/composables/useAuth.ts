@@ -21,7 +21,6 @@ export function useAuth() {
         },
       );
       authStore.setToken(res.data.accessToken);
-      console.log('Login realizado com sucesso:', res.data);
       return true;
     } catch (e: any) {
       error.value = e.response?.data?.message || 'Usuário ou senha inválidos';
