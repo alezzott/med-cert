@@ -116,7 +116,7 @@ const loginSchema = toTypedSchema(
   }),
 );
 
-const { handleSubmit, values } = useForm({
+const { handleSubmit } = useForm({
   validationSchema: loginSchema,
 });
 
