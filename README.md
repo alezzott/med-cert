@@ -19,6 +19,7 @@
 - [Funcionalidades Principais](#funcionalidades-principais)
 - [Por que adotar o CID-11](#por-que-adotar-o-cid-11-icd-11-da-oms-em-vez-do-cid-10-atualmente-utilizado-no-brasil)
 - [Comparativo CID-10 x CID-11](#comparativo-cid-10-icd-10-x-cid-11-icd-11)
+- [Swagger](#documentação-da-api-swagger)
 
 ---
 
@@ -192,6 +193,25 @@ npm run test
 
 ---
 
+## 📚 Documentação da API - Swagger
+
+A API do MedCert possui documentação interativa gerada automaticamente via **Swagger**.
+
+- **Acesse:** [http://localhost:4000/docs](http://localhost:4000/docs)
+- **Autenticação:** Para testar endpoints protegidos, clique em "Authorize" e insira seu token JWT.
+
+### Principais recursos do Swagger
+
+- Visualização de todos os endpoints disponíveis
+- Teste de requisições diretamente pelo navegador
+- Exemplos de payloads e respostas
+- Descrição dos parâmetros, validações e erros
+- Suporte a autenticação JWT
+
+> **Dica:** Use o Swagger para explorar, o backend do MedCert.
+
+---
+
 ## ✨ Funcionalidades Principais
 
 - **Autenticação:** Login, logout, proteção de rotas, sessão de 4h
@@ -235,4 +255,4 @@ Embora o Brasil utilize oficialmente a **Classificação Internacional de Doenç
 
 ## 📬 Dúvidas ou problemas?
 
-Abra uma **issue** no repositório ou entre em contato pelo e-mail informado na documentação.
+Abra uma **issue** no repositório.
