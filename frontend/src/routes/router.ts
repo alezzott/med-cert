@@ -9,6 +9,7 @@ import {
   type NavigationGuardNext,
   type RouteLocationNormalized,
 } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 const Login = () => import('@/views/LoginView.vue');
 
@@ -79,6 +80,12 @@ router.beforeEach((to, _from, next) => {
   const auth = useAuthStore();
   const token = auth.token;
   const authenticated = !!token && isTokenValid(token);
+
+  if (token && !isTokenValid(token)) {
+    auth.logout();
+    toast.error('Sessão expirada. Faça login novamente.');
+    return next('/login');
+  }
 
   if (to.path === '/' && authenticated) {
     next('/dashboard');

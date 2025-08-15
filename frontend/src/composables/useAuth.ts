@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth.store';
 import { useRouter } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 export function useAuth() {
   const loading = ref(false);
@@ -21,6 +22,7 @@ export function useAuth() {
         },
       );
       authStore.setToken(res.data.accessToken);
+      toast.success('logado com sucesso');
       return true;
     } catch (e: any) {
       error.value = e.response?.data?.message || 'Usuário ou senha inválidos';
@@ -38,6 +40,7 @@ export function useAuth() {
   function logout() {
     authStore.logout();
     router.push('/login');
+    toast.success('deslogado com sucesso');
   }
 
   return { login, logout, loading, error, isAuthenticated };
