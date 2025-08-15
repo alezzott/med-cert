@@ -17,7 +17,7 @@
     <div class="flex-1 flex items-center justify-center bg-white p-4 md:p-8">
       <div class="w-full max-w-sm">
         <section class="flex m-auto items-center justify-center my-8">
-          <img :src="logo" class="h-14 w-14" draggable="false" />
+          <img src="/favicon.png" class="h-14 w-14" draggable="false" />
           <h1 class="font-semibold text-2xl">MedCert</h1>
         </section>
         <p class="text-gray-800 text-center mb-8 text-lg font-semibold">
@@ -99,7 +99,6 @@ import {
 } from '@/components/ui/form';
 import { ref } from 'vue';
 import { Eye, EyeOff } from 'lucide-vue-next';
-import logo from '../assets/favicon.png';
 import ManagerIllustrator from '../assets/bro-human.svg';
 
 const showPassword = ref(false);

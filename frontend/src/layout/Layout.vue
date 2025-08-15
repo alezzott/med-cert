@@ -14,7 +14,6 @@ import {
 import { useAuth } from '@/composables/useAuth';
 import { sidebarMenu } from '@/routes/sidebar.menu';
 import { Home, Users, FileText, PlusSquare, LogOut } from 'lucide-vue-next';
-import logo from '../assets/favicon.png';
 
 const icons = {
   dashboard: Home,
@@ -36,8 +35,7 @@ const handleLogout = () => {
     <Sidebar class="h-screen">
       <SidebarHeader>
         <picture class="flex flex-row m-auto items-center">
-          <img :src="logo" class="object-cover m-auto h-16" />
-
+          <img src="/favicon.png" class="object-cover m-auto h-16" />
           <h1 class="font-semibold text-2xl">Medcert</h1>
         </picture>
       </SidebarHeader>
