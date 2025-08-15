@@ -55,8 +55,6 @@ watch([currentPage, pageSize], () => {
   });
 });
 
-console.log(collaborators, 'collaborators');
-
 const goToPage = (page: number) => {
   if (page >= 1) {
     currentPage.value = page;

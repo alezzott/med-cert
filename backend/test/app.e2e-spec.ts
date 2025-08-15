@@ -34,7 +34,6 @@ describe('App E2E', () => {
       .post('/auth/login')
       .send(loginDto)
       .expect(201);
-    console.log('LOGIN RESPONSE:', res.body);
     const { accessToken } = res.body as { accessToken: string };
     expect(accessToken).toBeDefined();
     jwt = accessToken;

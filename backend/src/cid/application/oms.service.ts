@@ -160,7 +160,7 @@ export class OmsService {
 
     const cachedCid = await this.cacheManager.get<CidResponseDto>(cacheKey);
     if (cachedCid) {
-      console.log(`Busca CID por código cache HIT: ${code}`);
+      this.logger.log(`Busca CID por código cache HIT: ${code}`);
       return cachedCid;
     }
 
@@ -175,7 +175,7 @@ export class OmsService {
 
       if (cid) {
         await this.cacheManager.set(cacheKey, cid, CODE_CACHE_TTL);
-        console.log(
+        this.logger.log(
           `Busca CID por código cache MISS: ${code} (salvo no cache)`,
         );
       }
