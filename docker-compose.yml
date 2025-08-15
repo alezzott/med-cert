@@ -10,6 +10,17 @@ services:
       - ./backend/.env
     depends_on:
       - mongo
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - backend
 
   mongo:
     image: mongo:5.0
