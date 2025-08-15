@@ -1,8 +1,7 @@
 <template>
   <div class="flex flex-col md:flex-row min-h-screen">
-    <!-- Esquerda: texto -->
     <div
-      class="flex-1 flex items-center justify-center p-8"
+      class="flex-2 flex items-center justify-center p-8"
       style="background: var(--color-petroleo)"
     >
       <h2
@@ -14,7 +13,6 @@
         >
       </h2>
     </div>
-    <!-- Direita: login -->
     <div class="flex-1 flex items-center justify-center bg-white p-4 md:p-8">
       <div class="w-full max-w-sm">
         <div v-if="loading" class="flex items-center justify-center mb-4">
