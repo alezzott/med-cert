@@ -3,11 +3,16 @@ import { useAuthStore } from '@/stores/auth.store';
 import CollaboratorsView from '@/views/CollaboratorsView.vue';
 import Dashboard from '@/views/Dashboard.vue';
 import MedicalCertificates from '@/views/MedicalCertificates.vue';
-import { createRouter, createWebHistory } from 'vue-router';
+import {
+  createRouter,
+  createWebHistory,
+  type NavigationGuardNext,
+  type RouteLocationNormalized,
+} from 'vue-router';
 
 const Login = () => import('@/views/LoginView.vue');
 
-function isTokenValid(token: string) {
+function isTokenValid(token: string): boolean {
   if (!token) return false;
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
@@ -15,6 +20,29 @@ function isTokenValid(token: string) {
   } catch {
     return false;
   }
+}
+
+function requireAuth(
+  _to: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
+  next: NavigationGuardNext,
+) {
+  const auth = useAuthStore();
+  const token = auth.token;
+  if (!token || !isTokenValid(token)) {
+    return next('/login');
+  }
+  next();
+}
+
+function handleLogout(
+  _to: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
+  next: NavigationGuardNext,
+) {
+  const auth = useAuthStore();
+  auth.logout();
+  next('/login');
 }
 
 const routes = [
@@ -29,15 +57,16 @@ const routes = [
       { path: 'medical-certificates', component: MedicalCertificates },
     ],
     meta: { requiresAuth: true },
+    beforeEnter: requireAuth,
   },
   {
     path: '/logout',
     component: { render: () => null },
-    beforeEnter: (to, from, next) => {
-      const auth = useAuthStore();
-      auth.logout();
-      next('/login');
-    },
+    beforeEnter: handleLogout,
+  },
+  {
+    path: '/:catchAll(.*)',
+    redirect: '/',
   },
 ];
 
@@ -46,15 +75,13 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const auth = useAuthStore();
   const token = auth.token;
   const authenticated = !!token && isTokenValid(token);
 
   if (to.path === '/' && authenticated) {
     next('/dashboard');
-  } else if (to.meta.requiresAuth && !authenticated) {
-    next('/login');
   } else {
     next();
   }
