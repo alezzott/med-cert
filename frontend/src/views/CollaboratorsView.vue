@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, onMounted, ref, watch } from 'vue';
+import { computed, h, onMounted, ref, watch } from 'vue';
 import { getCoreRowModel, useVueTable, FlexRender } from '@tanstack/vue-table';
 
 import Table from '@/components/ui/table/Table.vue';
@@ -28,19 +28,34 @@ import { useUpdateCollaboratorStatus } from '@/composables/useUpdateCollaborator
 import Spinner from '@/components/ui/spinner/Spinner.vue';
 import { useCollaborators } from '@/composables/useFetchCollaborators';
 import { toast } from 'vue-sonner';
+import { useCollaboratorSearch } from '@/composables/useSearchCollaborator';
+import { Input } from '@/components/ui/input';
 
 const { updateStatus } = useUpdateCollaboratorStatus();
 const { collaborators, loading, error, fetchCollaborators } =
   useCollaborators();
+const {
+  searchValue,
+  loading: searchLoading,
+  collaborator,
+  searchCollaborator,
+} = useCollaboratorSearch();
 
 const currentPage = ref(1);
 const pageSize = ref(10);
-const hasNextPage = ref(false);
+const hasNextPage = computed(() => {
+  return currentPage.value * pageSize.value;
+});
 const pageSizeOptions = [5, 10, 20, 50];
 
 watch([currentPage, pageSize], () => {
-  fetchCollaborators();
+  fetchCollaborators({
+    page: currentPage.value,
+    limit: pageSize.value,
+  });
 });
+
+console.log(collaborators, 'collaborators');
 
 const goToPage = (page: number) => {
   if (page >= 1) {
@@ -166,8 +181,15 @@ const table = useVueTable({
 });
 
 onMounted(() => {
-  fetchCollaborators();
+  fetchCollaborators({
+    page: currentPage.value,
+    limit: pageSize.value,
+  });
 });
+
+const handleSearchInput = () => {
+  searchCollaborator(searchValue.value);
+};
 </script>
 
 <template>
@@ -206,6 +228,33 @@ onMounted(() => {
         </div>
       </div>
 
+      <div class="flex items-center gap-4 w-full mb-4">
+        <Input
+          v-model="searchValue"
+          type="text"
+          placeholder="Buscar por nome ou CPF..."
+          class="border px-2 py-1 text-sm w-full rounded-md"
+        />
+        <Button
+          v-if="searchValue"
+          class="cursor-pointer"
+          size="default"
+          variant="outline"
+          @click="
+            () => {
+              searchValue = '';
+              handleSearchInput();
+            }
+          "
+        >
+          Limpar
+        </Button>
+        <Button @click="handleSearchInput">Buscar</Button>
+      </div>
+      <div v-if="searchLoading">
+        <Spinner />
+      </div>
+
       <div class="rounded-md border">
         <Table>
           <TableHeader>
@@ -223,7 +272,18 @@ onMounted(() => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <template v-if="table.getRowModel().rows?.length">
+            <template v-if="collaborator">
+              <TableRow>
+                <TableCell v-for="col in columns" :key="col.accessorKey">
+                  {{
+                    Array.isArray(collaborator)
+                      ? collaborator[0][col.accessorKey]
+                      : collaborator[col.accessorKey]
+                  }}
+                </TableCell>
+              </TableRow>
+            </template>
+            <template v-else-if="table.getRowModel().rows?.length">
               <TableRow
                 v-for="row in table.getRowModel().rows"
                 :key="row.id"

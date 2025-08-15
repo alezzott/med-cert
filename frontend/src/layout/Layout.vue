@@ -22,6 +22,7 @@ const icons = {
   'plus-square': PlusSquare,
 };
 
+type IconKey = 'dashboard' | 'users' | 'file-text' | 'plus-square';
 const { logout } = useAuth();
 
 const handleLogout = () => {
@@ -45,7 +46,7 @@ const handleLogout = () => {
                 class="flex items-center gap-3 px-3 py-2"
               >
                 <component
-                  :is="icons[item.icon]"
+                  :is="icons[item.icon as IconKey]"
                   :size="20"
                   class="text-black"
                 />
