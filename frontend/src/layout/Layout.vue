@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/composables/useAuth';
 import { sidebarMenu } from '@/routes/sidebar.menu';
 import { Home, Users, FileText, PlusSquare, LogOut } from 'lucide-vue-next';
+import logo from '../assets/favicon.png';
 
 const icons = {
   dashboard: Home,
@@ -33,8 +34,12 @@ const handleLogout = () => {
 <template>
   <SidebarProvider>
     <Sidebar class="h-screen">
-      <SidebarHeader class="px-4 py-6">
-        <span class="text-xl font-bold text-black">MedCert</span>
+      <SidebarHeader>
+        <picture class="flex flex-row m-auto items-center">
+          <img :src="logo" class="object-cover m-auto h-16" />
+
+          <h1 class="font-semibold text-2xl">Medcert</h1>
+        </picture>
       </SidebarHeader>
 
       <SidebarContent class="px-2">
@@ -72,12 +77,6 @@ const handleLogout = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-
-        <!-- Informações do usuário (opcional) -->
-        <div class="mt-4 px-3 py-2 text-xs text-black/70">
-          <div class="font-medium">Dr. João Silva</div>
-          <div class="text-black/50">joao@medcert.com</div>
-        </div>
       </SidebarFooter>
     </Sidebar>
 
