@@ -32,6 +32,7 @@ import {
   getLocalTimeZone,
 } from '@internationalized/date';
 import { useCreateCollaborator } from '@/composables/useCreateCollaborator';
+import { applyCpfMask, removeCpfMask } from '@/utils/cpf-mask.utils';
 
 const openDialog = ref(false);
 const saving = ref(false);
@@ -40,7 +41,7 @@ const { createCollaborator, error: apiError } = useCreateCollaborator();
 
 const schema = toTypedSchema(
   z.object({
-    name: z.string().nonempty('Nome obrigatório').min(3, 'Nome obrigatório'),
+    name: z.string().min(1, 'Nome obrigatório'),
     email: z.string().nonempty('E-mail obrigatório').email('E-mail inválido'),
     cpf: z.string().nonempty('CPF obrigatório').min(11, 'CPF inválido'),
     birthDate: z
@@ -76,6 +77,7 @@ const onSubmit = async (formValues: any) => {
   try {
     const payload = {
       ...formValues,
+      cpf: removeCpfMask(formValues.cpf),
       birthDate: formValues.birthDate,
       role: 'COLLABORATOR',
     };
@@ -167,20 +169,23 @@ const formatDateForDisplay = (dateString: string) => {
                     v-bind="componentField"
                   />
                 </FormControl>
-                <FormDescription>
-                  E-mail institucional do colaborador.
-                </FormDescription>
+                <FormDescription> E-mail do colaborador. </FormDescription>
                 <FormMessage />
               </FormItem>
             </FormField>
-            <FormField v-slot="{ componentField }" name="cpf">
+            <FormField v-slot="{ value, setValue }" name="cpf">
               <FormItem>
                 <FormLabel>CPF</FormLabel>
                 <FormControl>
                   <Input
                     type="text"
+                    inputMode="numeric"
                     placeholder="CPF"
-                    v-bind="componentField"
+                    :model-value="value"
+                    maxlength="14"
+                    @update:modelValue="
+                      (val) => setValue(applyCpfMask(String(val)))
+                    "
                   />
                 </FormControl>
                 <FormDescription> CPF válido do colaborador. </FormDescription>
