@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import { toast } from 'vue-sonner';
 
 export function useCreateCollaborator() {
   const error = ref('');
@@ -16,9 +17,12 @@ export function useCreateCollaborator() {
           },
         },
       );
+      toast.success('colaborador criado !');
       return response.data;
     } catch (e: any) {
-      error.value = e.response?.data?.message || 'Erro ao salvar colaborador';
+      const msg = e.response?.data?.error?.message;
+      toast.warning(msg);
+      error.value = msg;
       throw e;
     }
   }
