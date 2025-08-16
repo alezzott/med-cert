@@ -35,6 +35,7 @@ export class CollaboratorUseCase {
     );
     return this.collaboratorService.create(collaborator);
   }
+
   async listCollaborators(): Promise<Collaborator[]> {
     return await this.collaboratorService.findAll();
   }
@@ -57,7 +58,14 @@ export class CollaboratorUseCase {
     return this.collaboratorService.findByEmail(email);
   }
 
-  async findByCpf(cpf?: string, name?: string): Promise<Collaborator | null> {
+  async findByCpf(cpf?: string, name?: string): Promise<Collaborator[]> {
     return this.collaboratorService.findByCpf(cpf, name);
+  }
+
+  async findByCpfExists(
+    cpf?: string,
+    name?: string,
+  ): Promise<Collaborator | null> {
+    return this.collaboratorService.findByCpfExists(cpf, name);
   }
 }

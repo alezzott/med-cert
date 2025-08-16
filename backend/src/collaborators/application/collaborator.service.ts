@@ -59,8 +59,16 @@ export class CollaboratorService {
     return this.collaboratorRepository.findByEmail(email);
   }
 
-  async findByCpf(cpf?: string, name?: string): Promise<Collaborator | null> {
+  async findByCpf(cpf?: string, name?: string): Promise<Collaborator[]> {
     this.logger.log(`Buscando colaborador por CPF: ${cpf} ou nome ${name}`);
     return this.collaboratorRepository.findByCpf(cpf, name);
+  }
+
+  async findByCpfExists(
+    cpf?: string,
+    name?: string,
+  ): Promise<Collaborator | null> {
+    this.logger.log(`Buscando colaborador por CPF: ${cpf} ou nome ${name}`);
+    return this.collaboratorRepository.findByCpfExists(cpf, name);
   }
 }

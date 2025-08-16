@@ -18,3 +18,7 @@ export class CPF {
     return this.value;
   }
 }
+
+export function sanitizeCpf(cpf: string): string {
+  return cpf ? cpf.replace(/\D/g, '') : '';
+}

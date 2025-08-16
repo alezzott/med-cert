@@ -10,5 +10,6 @@ export interface CollaboratorRepository {
     limit: number,
   ): Promise<{ collaborators: Collaborator[]; total: number }>;
   updateStatus(id: string, status: string): Promise<Collaborator | null>;
-  findByCpf(cpf?: string, name?: string): Promise<Collaborator | null>;
+  findByCpf(cpf?: string, name?: string): Promise<Collaborator[]>;
+  findByCpfExists(cpf?: string, name?: string): Promise<Collaborator | null>;
 }

@@ -64,6 +64,7 @@ export class CollaboratorRepositoryImpl implements CollaboratorRepository {
     const skip = (page - 1) * limit;
     const docs = await this.collaboratorModel
       .find()
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .exec();
@@ -76,15 +77,20 @@ export class CollaboratorRepositoryImpl implements CollaboratorRepository {
     };
   }
 
-  async findByCpf(cpf?: string, name?: string): Promise<Collaborator | null> {
-    if (!cpf && !name) return null;
+  async findByCpf(cpf?: string, name?: string): Promise<Collaborator[]> {
+    if (!cpf && !name) return [];
 
     const query: Record<string, any> = {};
     if (cpf) query.cpf = cpf;
     if (name) query.name = { $regex: name, $options: 'i' };
 
-    const doc = await this.collaboratorModel.findOne(query).exec();
-    return this.toCollaborator(doc);
+    const docs = await this.collaboratorModel.find(query).exec();
+    return docs.map((doc) => this.toCollaborator(doc) as Collaborator);
+  }
+
+  async findByCpfExists(cpf: string): Promise<Collaborator | null> {
+    const doc = await this.collaboratorModel.findOne({ cpf }).exec();
+    return doc ? this.toCollaborator(doc) : null;
   }
 
   async updateStatus(

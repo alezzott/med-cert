@@ -27,6 +27,7 @@ import {
   SearchCollaboratorSwagger,
   UpdateCollaboratorStatusSwagger,
 } from '../docs/collaborators.swagger';
+import { CPF, sanitizeCpf } from '../domain/value-objects/cpf.vo';
 
 @ApiTags('collaborators')
 @Controller('collaborators')
@@ -45,8 +46,8 @@ export class CollaboratorController {
   ): Promise<CollaboratorResponseDto> {
     this.logger.log(`Admin solicitou criação de colaborador: ${dto.email}`);
 
-    const { CPF } = await import('../domain/value-objects/cpf.vo');
-    if (!CPF.isValid(dto.cpf)) {
+    const sanitizedCpf = sanitizeCpf(dto.cpf);
+    if (!CPF.isValid(sanitizedCpf)) {
       throw new BadRequestException('CPF inválido');
     }
 
@@ -55,7 +56,7 @@ export class CollaboratorController {
       throw new ConflictException('Já existe um colaborador com esse email.');
     }
 
-    const existsCpf = await this.useCase.findByCpf(dto.cpf);
+    const existsCpf = await this.useCase.findByCpfExists(dto.cpf);
     if (existsCpf) {
       throw new ConflictException('Já existe um colaborador com esse CPF.');
     }
@@ -70,7 +71,7 @@ export class CollaboratorController {
       id: collaborator.id,
       name: collaborator.name,
       email: collaborator.email,
-      cpf: collaborator.cpf,
+      cpf: sanitizedCpf,
       status: collaborator.status,
       birthDate: formatDateTime(collaborator.birthDate),
       createdAt: collaborator.createdAt
@@ -90,14 +91,13 @@ export class CollaboratorController {
     data: CollaboratorResponseDto[];
     page: number;
     limit?: number;
+    total?: number;
   }> {
     this.logger.log(
       `Admin solicitou listagem de colaboradores - página: ${page}, limite: ${limit}`,
     );
-    const { collaborators } = await this.useCase.listCollaboratorsPaginated(
-      page,
-      limit,
-    );
+    const { collaborators, total } =
+      await this.useCase.listCollaboratorsPaginated(page, limit);
     return {
       data: collaborators.map((c) => ({
         id: c.id,
@@ -109,6 +109,7 @@ export class CollaboratorController {
         createdAt: c.createdAt ? formatDateTime(c.createdAt) : '',
       })),
       page,
+      total,
     };
   }
 
@@ -119,28 +120,31 @@ export class CollaboratorController {
   async findByCpf(
     @Query('cpf') cpf?: string,
     @Query('name') name?: string,
-  ): Promise<CollaboratorResponseDto | null> {
+  ): Promise<CollaboratorResponseDto[]> {
     this.logger.log(`Admin buscou colaborador pelo CPF: ${cpf} ou ${name}`);
 
     if (!cpf && !name) {
-      throw new BadRequestException('CPF o nome do colaborar é obrigatório');
+      throw new BadRequestException('CPF ou nome do colaborador é obrigatório');
     }
 
-    const collaborator = await this.useCase.findByCpf(cpf, name);
-    if (!collaborator) {
+    const collaborators = await this.useCase.findByCpf(cpf, name);
+    if (!collaborators || collaborators.length === 0) {
       throw new NotFoundException(
-        `Colaborador com CPF ${cpf} ou ${name} não encontrado`,
+        `Colaborador com CPF ${cpf} ou nome ${name} não encontrado`,
       );
     }
 
-    return {
+    return collaborators.map((collaborator) => ({
       id: collaborator.id,
       name: collaborator.name,
       email: collaborator.email,
       cpf: collaborator.cpf,
       status: collaborator.status,
       birthDate: formatDateTime(collaborator.birthDate),
-    };
+      createdAt: collaborator.createdAt
+        ? formatDateTime(collaborator.createdAt)
+        : '',
+    }));
   }
 
   @Patch('status')
