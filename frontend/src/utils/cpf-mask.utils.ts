@@ -1,18 +1,17 @@
 export function applyCpfMask(value: string): string {
   if (!value) return '';
 
-  const numbers = value.replace(/\D/g, '');
-  const limited = numbers.slice(0, 11);
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
 
-  if (limited.length <= 3) {
-    return limited;
-  } else if (limited.length <= 6) {
-    return `${limited.slice(0, 3)}.${limited.slice(3)}`;
-  } else if (limited.length <= 9) {
-    return `${limited.slice(0, 3)}.${limited.slice(3, 6)}.${limited.slice(6)}`;
-  } else {
-    return `${limited.slice(0, 3)}.${limited.slice(3, 6)}.${limited.slice(6, 9)}-${limited.slice(9)}`;
+  let masked = numbers;
+  if (numbers.length > 3 && numbers.length <= 6) {
+    masked = `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+  } else if (numbers.length > 6 && numbers.length <= 9) {
+    masked = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+  } else if (numbers.length > 9) {
+    masked = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9)}`;
   }
+  return masked;
 }
 
 export function removeCpfMask(value: string): string {

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, h, onMounted, ref, watch } from 'vue';
 import { getCoreRowModel, useVueTable, FlexRender } from '@tanstack/vue-table';
-
 import Table from '@/components/ui/table/Table.vue';
 import TableHead from '@/components/ui/table/TableHead.vue';
 import TableHeader from '@/components/ui/table/TableHeader.vue';
@@ -30,9 +29,10 @@ import { useCollaborators } from '@/composables/useFetchCollaborators';
 import { toast } from 'vue-sonner';
 import { useCollaboratorSearch } from '@/composables/useSearchCollaborator';
 import { Input } from '@/components/ui/input';
+import { applyCpfMask } from '@/utils/cpf-mask.utils';
 
 const { updateStatus } = useUpdateCollaboratorStatus();
-const { collaborators, loading, error, fetchCollaborators } =
+const { collaborators, loading, error, total, fetchCollaborators } =
   useCollaborators();
 const {
   searchValue,
@@ -43,38 +43,76 @@ const {
 
 const currentPage = ref(1);
 const pageSize = ref(10);
-const hasNextPage = computed(() => {
-  return currentPage.value * pageSize.value;
-});
 const pageSizeOptions = [5, 10, 20, 50];
 
-watch([currentPage, pageSize], () => {
-  fetchCollaborators({
-    page: currentPage.value,
-    limit: pageSize.value,
-  });
+const paginatedCollaborator = computed(() => {
+  if (collaborator.value?.length) {
+    const start = (currentPage.value - 1) * pageSize.value;
+    return collaborator.value.slice(start, start + pageSize.value);
+  }
+  return [];
 });
 
-const goToPage = (page: number) => {
-  if (page >= 1) {
-    currentPage.value = page;
+const tableData = computed(() => {
+  if (searchValue.value && collaborator.value?.length) {
+    return paginatedCollaborator.value;
   }
-};
+  return collaborators.value;
+});
 
-const goToFirstPage = () => goToPage(1);
-const goToNextPage = () => goToPage(currentPage.value + 1);
-const goToPrevPage = () => goToPage(currentPage.value - 1);
-const goToLastPage = async () => {
-  while (hasNextPage.value) {
-    currentPage.value++;
-    await fetchCollaborators();
+const hasNextPage = computed(() => {
+  const totalItems =
+    searchValue.value && collaborator.value?.length
+      ? collaborator.value.length
+      : total.value;
+  return currentPage.value * pageSize.value < totalItems;
+});
+
+watch([currentPage, pageSize], () => {
+  if (!searchValue.value) {
+    fetchCollaborators({ page: currentPage.value, limit: pageSize.value });
   }
-};
+});
 
-const changePageSize = (newSize: number) => {
+function goToPage(page: number) {
+  if (page >= 1) currentPage.value = page;
+}
+
+function goToFirstPage() {
+  goToPage(1);
+}
+
+function goToNextPage() {
+  if (hasNextPage.value) goToPage(currentPage.value + 1);
+}
+
+function goToPrevPage() {
+  if (currentPage.value > 1) goToPage(currentPage.value - 1);
+}
+
+function goToLastPage() {
+  const totalItems =
+    searchValue.value && collaborator.value?.length
+      ? collaborator.value.length
+      : total.value;
+  const lastPage = Math.ceil(totalItems / pageSize.value);
+  goToPage(lastPage);
+}
+
+function changePageSize(newSize: number) {
   pageSize.value = newSize;
   currentPage.value = 1;
-};
+}
+
+function handleSearchInput() {
+  currentPage.value = 1;
+
+  if (searchValue.value && searchValue.value.trim()) {
+    searchCollaborator(searchValue.value);
+  } else {
+    fetchCollaborators({ page: 1, limit: pageSize.value });
+  }
+}
 
 function parseCustomDate(dateStr: string) {
   if (!dateStr) return null;
@@ -105,7 +143,7 @@ const columns = [
   {
     accessorKey: 'cpf',
     header: 'CPF',
-    cell: ({ row }: any) => row.getValue('cpf'),
+    cell: ({ row }: any) => applyCpfMask(row.getValue('cpf')),
   },
   {
     accessorKey: 'birthDate',
@@ -122,10 +160,9 @@ const columns = [
     accessorKey: 'createdAt',
     header: 'Data de Criação',
     cell: ({ row }: any) => {
-      const value = row.getValue('createdAt');
-      const date = parseCustomDate(value);
-      return date && !isNaN(date.getTime())
-        ? date.toLocaleString('pt-BR')
+      const date = parseCustomDate(row.getValue('createdAt'));
+      return date
+        ? `${date.toLocaleDateString('pt-BR')} - ${date.toLocaleTimeString('pt-BR')}`
         : 'Data inválida';
     },
   },
@@ -135,15 +172,13 @@ const columns = [
     cell: ({ row }: any) => {
       const status = row.getValue('status') as CollaboratorStatus;
       const collaborator = row.original;
-      const handleToggleStatus = async () => {
+      async function handleToggleStatus() {
         const newStatus =
           status === CollaboratorStatus.ACTIVE
             ? CollaboratorStatus.INACTIVE
             : CollaboratorStatus.ACTIVE;
-
         const statusText =
           newStatus === CollaboratorStatus.ACTIVE ? 'ativado' : 'desativado';
-
         try {
           const ok = await updateStatus(collaborator.id, newStatus);
           if (ok) {
@@ -152,11 +187,10 @@ const columns = [
           } else {
             toast.error('Erro ao atualizar status do colaborador');
           }
-        } catch (error) {
+        } catch {
           toast.error('Erro ao atualizar status do colaborador');
         }
-      };
-
+      }
       return h(
         Button,
         {
@@ -164,344 +198,267 @@ const columns = [
           onClick: handleToggleStatus,
           class: 'cursor-pointer',
         },
-        {
-          default: () => (status === 'ACTIVE' ? 'Ativo' : 'Inativo'),
-        },
+        { default: () => (status === 'ACTIVE' ? 'Ativo' : 'Inativo') },
       );
     },
   },
 ];
 
 const table = useVueTable({
-  data: collaborators,
+  data: tableData,
   columns,
   getCoreRowModel: getCoreRowModel(),
 });
 
 onMounted(() => {
-  fetchCollaborators({
-    page: currentPage.value,
-    limit: pageSize.value,
-  });
+  fetchCollaborators({ page: currentPage.value, limit: pageSize.value });
 });
-
-const handleSearchInput = () => {
-  searchCollaborator(searchValue.value);
-};
 </script>
 
 <template>
-  <div class="p-4 md:p-8">
-    <section
+  <main class="p-4 md:p-8">
+    <header
       class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8"
+      aria-label="Cabeçalho de colaboradores"
     >
       <h1 class="text-xl md:text-2xl font-bold">Colaboradores</h1>
       <AddCollaboratorDialog @saved="fetchCollaborators" />
-    </section>
+    </header>
 
-    <Spinner v-if="loading" />
-    <div v-else-if="error" class="text-red-500 text-center p-4">
-      {{ error }}
-    </div>
-
-    <div v-else>
-      <!-- Controles de paginação e busca -->
-      <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4"
-      >
-        <div class="flex items-center space-x-2">
-          <span class="text-sm text-muted-foreground whitespace-nowrap"
-            >Itens por página:</span
-          >
-          <Select
-            :model-value="pageSize.toString()"
-            @update:model-value="(value) => changePageSize(Number(value))"
-          >
-            <SelectTrigger class="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem
-                v-for="size in pageSizeOptions"
-                :key="size"
-                :value="size.toString()"
-              >
-                {{ size }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div class="flex items-center gap-2 w-full md:w-full max-md:max-w-md">
-          <Input
-            v-model="searchValue"
-            type="text"
-            placeholder="Buscar por nome ou CPF..."
-            class="border px-2 py-1 text-sm flex-1 rounded-md"
-          />
-          <Button
-            v-if="searchValue"
-            class="cursor-pointer whitespace-nowrap"
-            size="sm"
-            variant="outline"
-            @click="
-              () => {
-                searchValue = '';
-                handleSearchInput();
-              }
-            "
-          >
-            Limpar
-          </Button>
-          <Button
-            @click="handleSearchInput"
-            size="sm"
-            class="whitespace-nowrap"
-          >
-            Buscar
-          </Button>
-        </div>
+    <section aria-live="polite">
+      <Spinner v-if="loading" />
+      <div v-else-if="error" class="text-red-500 text-center p-4" role="alert">
+        {{ error }}
       </div>
 
-      <div v-if="searchLoading">
-        <Spinner />
-      </div>
-
-      <div class="rounded-md border overflow-hidden">
-        <div class="hidden md:block">
-          <Table>
-            <TableHeader>
-              <TableRow
-                v-for="headerGroup in table.getHeaderGroups()"
-                :key="headerGroup.id"
-              >
-                <TableHead
-                  v-for="header in headerGroup.headers"
-                  :key="header.id"
-                >
-                  <FlexRender
-                    v-if="!header.isPlaceholder"
-                    :render="header.column.columnDef.header"
-                    :props="header.getContext()"
-                  />
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <template v-if="collaborator">
-                <TableRow>
-                  <TableCell v-for="col in columns" :key="col.accessorKey">
-                    <FlexRender
-                      :render="col.cell"
-                      :props="{
-                        row: {
-                          getValue: (key: string) =>
-                            Array.isArray(collaborator)
-                              ? collaborator[0][key]
-                              : collaborator[key],
-                          original: Array.isArray(collaborator)
-                            ? collaborator[0]
-                            : collaborator,
-                        },
-                      }"
-                    />
-                  </TableCell>
-                </TableRow>
-              </template>
-              <template v-else-if="table.getRowModel().rows?.length">
-                <TableRow
-                  v-for="row in table.getRowModel().rows"
-                  :key="row.id"
-                  :data-state="row.getIsSelected() && 'selected'"
-                >
-                  <TableCell
-                    v-for="cell in row.getVisibleCells()"
-                    :key="cell.id"
-                  >
-                    <FlexRender
-                      :render="cell.column.columnDef.cell"
-                      :props="cell.getContext()"
-                    />
-                  </TableCell>
-                </TableRow>
-              </template>
-              <template v-else>
-                <TableRow>
-                  <TableCell :colspan="columns.length" class="h-24 text-center">
-                    Nenhum resultado encontrado.
-                  </TableCell>
-                </TableRow>
-              </template>
-            </TableBody>
-          </Table>
-        </div>
-
-        <div class="md:hidden">
-          <template v-if="collaborator">
-            <div class="p-4 border-b bg-white">
-              <div class="space-y-2">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h3 class="font-semibold text-lg">
-                      {{
-                        Array.isArray(collaborator)
-                          ? collaborator[0].name
-                          : collaborator.name
-                      }}
-                    </h3>
-                    <p class="text-sm text-gray-600">
-                      {{
-                        Array.isArray(collaborator)
-                          ? collaborator[0].email
-                          : collaborator.email
-                      }}
-                    </p>
-                  </div>
-                  <div class="flex flex-col items-end gap-1">
-                    <Button
-                      :variant="
-                        (Array.isArray(collaborator)
-                          ? collaborator[0].status
-                          : collaborator.status) === 'ACTIVE'
-                          ? 'default'
-                          : 'outline'
-                      "
-                      size="sm"
-                      class="cursor-pointer"
-                    >
-                      {{
-                        (Array.isArray(collaborator)
-                          ? collaborator[0].status
-                          : collaborator.status) === 'ACTIVE'
-                          ? 'Ativo'
-                          : 'Inativo'
-                      }}
-                    </Button>
-                  </div>
-                </div>
-                <div class="grid grid-cols-1 gap-1 text-sm">
-                  <div>
-                    <strong>CPF:</strong>
-                    {{
-                      Array.isArray(collaborator)
-                        ? collaborator[0].cpf
-                        : collaborator.cpf
-                    }}
-                  </div>
-                  <div>
-                    <strong>Nascimento:</strong>
-                    {{
-                      Array.isArray(collaborator)
-                        ? collaborator[0].birthDate
-                        : collaborator.birthDate
-                    }}
-                  </div>
-                  <div>
-                    <strong>Criado em:</strong>
-                    {{
-                      Array.isArray(collaborator)
-                        ? collaborator[0].createdAt
-                        : collaborator.createdAt
-                    }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-          <template v-else-if="table.getRowModel().rows?.length">
-            <div
-              v-for="row in table.getRowModel().rows"
-              :key="row.id"
-              class="p-4 border-b bg-white"
+      <div v-else>
+        <form
+          class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4"
+          @submit.prevent="handleSearchInput"
+          aria-label="Filtros de colaboradores"
+        >
+          <div class="flex items-center space-x-2">
+            <label
+              for="pageSize"
+              class="text-sm text-muted-foreground whitespace-nowrap"
             >
-              <div class="space-y-2">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h3 class="font-semibold text-lg">
-                      {{ row.getValue('name') }}
-                    </h3>
-                    <p class="text-sm text-gray-600">
-                      {{ row.getValue('email') }}
-                    </p>
-                  </div>
-                  <div class="flex flex-col items-end gap-1">
-                    <FlexRender :render="columns[5].cell" :props="{ row }" />
-                  </div>
-                </div>
-                <div class="grid grid-cols-1 gap-1 text-sm">
-                  <div><strong>CPF:</strong> {{ row.getValue('cpf') }}</div>
-                  <div>
-                    <strong>Nascimento:</strong>
-                    <FlexRender :render="columns[3].cell" :props="{ row }" />
-                  </div>
-                  <div>
-                    <strong>Criado em:</strong>
-                    <FlexRender :render="columns[4].cell" :props="{ row }" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-          <template v-else>
-            <div class="p-8 text-center text-gray-500">
-              Nenhum resultado encontrado.
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <div
-        class="flex flex-col sm:flex-row items-center justify-center gap-4 py-4"
-      >
-        <div class="flex items-center space-x-1 sm:space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="currentPage === 1"
-            @click="goToFirstPage"
-            class="px-2"
-          >
-            <ChevronsLeft class="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="currentPage === 1"
-            @click="goToPrevPage"
-            class="px-2"
-          >
-            <ChevronLeft class="h-4 w-4" />
-          </Button>
-
-          <div class="flex items-center space-x-2 mx-4">
-            <span class="text-sm whitespace-nowrap">Página</span>
-            <div
-              class="border rounded px-3 py-1 min-w-[3rem] text-center text-sm"
+              Itens por página:
+            </label>
+            <Select
+              id="pageSize"
+              :model-value="pageSize.toString()"
+              @update:model-value="(value) => changePageSize(Number(value))"
+              aria-label="Selecionar quantidade de itens por página"
             >
-              {{ currentPage }}
-            </div>
+              <SelectTrigger class="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="size in pageSizeOptions"
+                  :key="size"
+                  :value="size.toString()"
+                  :aria-label="`Exibir ${size} itens por página`"
+                >
+                  {{ size }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="!hasNextPage"
-            @click="goToNextPage"
-            class="px-2"
-          >
-            <ChevronRight class="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="!hasNextPage"
-            @click="goToLastPage"
-            class="px-2"
-          >
-            <ChevronsRight class="h-4 w-4" />
-          </Button>
+          <div class="flex items-center gap-2 w-full md:w-full max-md:max-w-md">
+            <label for="searchInput" class="sr-only"
+              >Buscar por nome ou CPF</label
+            >
+            <Input
+              id="searchInput"
+              v-model="searchValue"
+              type="text"
+              placeholder="Buscar por nome ou CPF..."
+              class="border px-2 py-1 text-sm flex-1 rounded-md"
+              aria-label="Buscar por nome ou CPF"
+            />
+            <Button
+              v-if="searchValue"
+              class="cursor-pointer whitespace-nowrap"
+              size="sm"
+              variant="outline"
+              aria-label="Limpar busca"
+              @click="
+                () => {
+                  searchValue = '';
+                  handleSearchInput();
+                }
+              "
+            >
+              Limpar
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              class="whitespace-nowrap"
+              aria-label="Buscar colaboradores"
+              :disabled="!searchValue || !searchValue.trim()"
+            >
+              Buscar
+            </Button>
+          </div>
+        </form>
+
+        <div v-if="searchLoading">
+          <Spinner />
         </div>
+
+        <section
+          class="rounded-md border overflow-hidden"
+          aria-label="Tabela de colaboradores"
+        >
+          <div class="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow
+                  v-for="headerGroup in table.getHeaderGroups()"
+                  :key="headerGroup.id"
+                >
+                  <TableHead
+                    v-for="header in headerGroup.headers"
+                    :key="header.id"
+                  >
+                    <FlexRender
+                      v-if="!header.isPlaceholder"
+                      :render="header.column.columnDef.header"
+                      :props="header.getContext()"
+                    />
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <template v-if="table.getRowModel().rows?.length">
+                  <TableRow
+                    v-for="row in table.getRowModel().rows"
+                    :key="row.id"
+                    :data-state="row.getIsSelected() && 'selected'"
+                  >
+                    <TableCell
+                      v-for="cell in row.getVisibleCells()"
+                      :key="cell.id"
+                    >
+                      <FlexRender
+                        :render="cell.column.columnDef.cell"
+                        :props="cell.getContext()"
+                      />
+                    </TableCell>
+                  </TableRow>
+                </template>
+                <template v-else>
+                  <TableRow>
+                    <TableCell
+                      :colspan="columns.length"
+                      class="h-24 text-center"
+                      role="status"
+                    >
+                      Nenhum resultado encontrado.
+                    </TableCell>
+                  </TableRow>
+                </template>
+              </TableBody>
+            </Table>
+          </div>
+          <div class="md:hidden">
+            <Table>
+              <TableBody>
+                <template v-if="table.getRowModel().rows?.length">
+                  <TableRow
+                    v-for="row in table.getRowModel().rows"
+                    :key="row.id"
+                    :data-state="row.getIsSelected() && 'selected'"
+                  >
+                    <TableCell
+                      v-for="cell in row.getVisibleCells()"
+                      :key="cell.id"
+                    >
+                      <FlexRender
+                        :render="cell.column.columnDef.cell"
+                        :props="cell.getContext()"
+                      />
+                    </TableCell>
+                  </TableRow>
+                </template>
+                <template v-else>
+                  <TableRow>
+                    <TableCell
+                      :colspan="columns.length"
+                      class="h-24 text-center"
+                      role="status"
+                    >
+                      Nenhum resultado encontrado.
+                    </TableCell>
+                  </TableRow>
+                </template>
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+
+        <nav
+          class="flex flex-col sm:flex-row items-center justify-center gap-4 py-4"
+          aria-label="Paginação"
+        >
+          <div class="flex items-center space-x-1 sm:space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              :disabled="currentPage === 1"
+              @click="goToFirstPage"
+              class="px-2"
+              aria-label="Primeira página"
+            >
+              <ChevronsLeft class="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              :disabled="currentPage === 1"
+              @click="goToPrevPage"
+              class="px-2"
+              aria-label="Página anterior"
+            >
+              <ChevronLeft class="h-4 w-4" />
+            </Button>
+
+            <div class="flex items-center space-x-2 mx-4">
+              <span class="text-sm whitespace-nowrap">Página</span>
+              <div
+                class="border rounded px-3 py-1 min-w-[3rem] text-center text-sm"
+                aria-live="polite"
+              >
+                {{ currentPage }}
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              @click="goToNextPage"
+              :disabled="!hasNextPage"
+              class="px-2"
+              aria-label="Próxima página"
+            >
+              <ChevronRight class="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="goToLastPage"
+              :disabled="!hasNextPage"
+              class="px-2"
+              aria-label="Última página"
+            >
+              <ChevronsRight class="h-4 w-4" />
+            </Button>
+          </div>
+        </nav>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 </template>

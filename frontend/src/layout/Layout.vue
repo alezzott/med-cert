@@ -42,18 +42,14 @@ const handleLogout = () => {
       </SidebarHeader>
 
       <SidebarContent class="px-2">
-        <SidebarMenu>
+        <SidebarMenu class="mt-5">
           <SidebarMenuItem v-for="item in sidebarMenu" :key="item.to">
             <SidebarMenuButton as-child class="text-black transition-colors">
               <router-link
                 :to="item.to"
                 class="flex items-center gap-3 px-3 py-2"
               >
-                <component
-                  :is="icons[item.icon as IconKey]"
-                  :size="20"
-                  class="text-black"
-                />
+                <component :is="icons[item.icon as IconKey]" :size="20" />
                 <span>{{ item.name }}</span>
               </router-link>
             </SidebarMenuButton>
@@ -63,14 +59,13 @@ const handleLogout = () => {
 
       <SidebarFooter class="px-2 py-4 border-t border-white/20">
         <SidebarMenu>
-          <!-- Logout -->
           <SidebarMenuItem>
             <SidebarMenuButton
               class="text-black transition-colors cursor-pointer"
               @click="handleLogout"
             >
               <div class="flex items-center gap-3 py-2 w-full">
-                <LogOut :size="20" class="text-black" />
+                <LogOut :size="20" />
                 <span>Sair</span>
               </div>
             </SidebarMenuButton>
