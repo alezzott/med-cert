@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 import { AuthService } from './auth/application/auth.service';
 import { LoggerService, ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { setupSwagger } from './config/swagger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,33 +16,7 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('Med-Cert API')
-    .setDescription('API para gerenciamento de certificados médicos')
-    .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
-        in: 'header',
-      },
-      'JWT-auth',
-    )
-    .addTag('auth', 'Endpoints de autenticação')
-    .addTag('collaborators', 'Endpoints de colaboradores')
-    .addTag('medical-certificates', 'Endpoints de certificados médicos')
-    .addTag('cid', 'Endpoints de CID')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('/docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+  setupSwagger(app);
 
   const userService = app.get(AuthService);
   const logger = app.get<LoggerService>('Logger');
@@ -65,6 +39,8 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   const port = process.env.PORT || 4000;
