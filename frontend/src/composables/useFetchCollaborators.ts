@@ -9,6 +9,7 @@ export function useCollaborators() {
   const collaborators = ref<Collaborator[]>([]);
   const loading = ref(false);
   const error = ref('');
+  const total = ref(0);
 
   async function fetchCollaborators(params?: {
     page?: number;
@@ -17,16 +18,14 @@ export function useCollaborators() {
     loading.value = true;
     error.value = '';
     try {
-      const query = [];
-      if (params?.page) query.push(`page=${params.page}`);
-      if (params?.limit) query.push(`limit=${params.limit}`);
-      const queryString = query.length ? `?${query.join('&')}` : '';
-      const res = await axios.get(`${API_URL}/collaborators${queryString}`, {
+      const res = await axios.get(`${API_URL}/collaborators`, {
+        params,
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
       collaborators.value = res.data.data;
+      total.value = res.data.total || res.data.data?.length || 0;
     } catch (e: any) {
       toast.error('Erro ao buscar colaboradores');
       collaborators.value = [];
@@ -35,5 +34,5 @@ export function useCollaborators() {
     }
   }
 
-  return { collaborators, loading, error, fetchCollaborators };
+  return { collaborators, loading, error, total, fetchCollaborators };
 }
