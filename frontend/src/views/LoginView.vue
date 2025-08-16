@@ -17,7 +17,7 @@
     <div class="flex-1 flex items-center justify-center bg-white p-4 md:p-8">
       <div class="w-full max-w-sm">
         <section class="flex m-auto items-center justify-center my-8">
-          <img src="/favicon.png" class="h-14 w-14" draggable="false" />
+          <img :src="logo" class="h-14 w-14" draggable="false" />
           <h1 class="font-semibold text-2xl">MedCert</h1>
         </section>
         <p class="text-gray-800 text-center mb-8 text-lg font-semibold">
@@ -100,6 +100,7 @@ import {
 import { ref } from 'vue';
 import { Eye, EyeOff } from 'lucide-vue-next';
 import ManagerIllustrator from '../assets/bro-human.svg';
+import logo from '../assets/logo-icon.png';
 
 const showPassword = ref(false);
 const loginSchema = toTypedSchema(
