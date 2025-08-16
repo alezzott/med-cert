@@ -233,7 +233,9 @@ onUnmounted(() => {
 
 <template>
   <Dialog v-model:open="dialogOpen">
-    <DialogContent class="sm:max-w-[800px] w-full mx-4">
+    <DialogContent
+      class="w-full max-w-[95vw] sm:max-w-[800px] mx-auto my-4 p-4 rounded-lg bg-white shadow-lg max-h-[90vh] overflow-y-auto"
+    >
       <DialogHeader>
         <DialogTitle>Adicionar novo atestado</DialogTitle>
       </DialogHeader>
