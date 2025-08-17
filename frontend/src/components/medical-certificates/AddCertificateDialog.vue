@@ -25,6 +25,7 @@ import { useCollaboratorSearch } from '@/composables/useSearchCollaborator';
 import { useCreateCertificate } from '@/composables/useCreateCertificate';
 import { useCidSearch } from '@/composables/useSearchCid';
 import { applyCpfMask, removeCpfMask } from '@/utils/cpf-mask.utils';
+import { useMedicalCertificates } from '@/composables/useFetchCertificates';
 
 const props = defineProps<{
   open: boolean;
@@ -50,6 +51,7 @@ const {
 } = useCreateCertificate();
 
 const { cidOptions, cidLoading, searchCid, clearCidSearch } = useCidSearch();
+const { fetchCertificates } = useMedicalCertificates();
 
 const schema = toTypedSchema(
   z.object({
@@ -95,11 +97,11 @@ const {
 });
 
 watch(cpfCollaborator, (val) => {
-  if (val && val.id) {
-    setFieldValue('collaboratorId', val.id);
+  if (val && val.length > 0) {
+    setFieldValue('collaboratorId', val[0].id);
   } else {
     setFieldValue('collaboratorId', '');
-    if (cpfSearch.value && !val) {
+    if (cpfSearch.value && (!val || val.length === 0)) {
       setFieldError('collaboratorId', 'Colaborador não encontrado');
     }
   }
@@ -134,12 +136,8 @@ function handleCidInput(e: Event) {
 }
 
 function handleCpfInput() {
-  const maskedValue = applyCpfMask(cpfDisplay.value);
-  cpfDisplay.value = maskedValue;
-
-  const cleanCpf = removeCpfMask(maskedValue);
+  const cleanCpf = removeCpfMask(cpfDisplay.value);
   cpfSearch.value = cleanCpf;
-
   if (cleanCpf.length >= 3) {
     searchCollaborator(cleanCpf);
   }
@@ -176,7 +174,8 @@ const onSubmit = handleSubmit(async (formValues: any) => {
   };
 
   await createCertificate(payload, {
-    onSuccess: () => {
+    onSuccess: async () => {
+      await fetchCertificates();
       resetForm();
       cpfSearch.value = '';
       cidSearchTerm.value = '';
@@ -229,6 +228,21 @@ onUnmounted(() => {
     clearTimeout(cidSearchTimeout.value);
   }
 });
+
+function onCpfInput(e: Event) {
+  const rawValue = (e.target as HTMLInputElement).value;
+  const maskedValue = applyCpfMask(rawValue);
+  cpfDisplay.value = maskedValue;
+  cpfSearch.value = removeCpfMask(maskedValue);
+}
+
+function clearCpfInput() {
+  cpfDisplay.value = '';
+  cpfSearch.value = '';
+  cpfCollaborator.value = [];
+  setFieldValue('collaboratorId', '');
+  setFieldError('collaboratorId', undefined);
+}
 </script>
 
 <template>
@@ -246,13 +260,30 @@ onUnmounted(() => {
         </label>
         <section class="flex flex-row gap-3">
           <input
-            v-model="cpfDisplay"
+            :value="cpfDisplay"
+            @input="onCpfInput"
             placeholder="Digite o CPF (ex: 123.456.789-01)"
             :class="{ 'border-red-500': errors.collaboratorId }"
             maxlength="14"
             class="w-full pl-3 pr-10 h-10 rounded-md border"
+            type="text"
+            inputMode="numeric"
           />
-          <Button size="lg" @click="handleCpfInput">Buscar</Button>
+          <Button
+            size="lg"
+            variant="outline"
+            type="button"
+            @click="clearCpfInput"
+            v-if="cpfDisplay"
+          >
+            Limpar
+          </Button>
+          <Button
+            size="lg"
+            @click="handleCpfInput"
+            :disabled="removeCpfMask(cpfDisplay).length < 11"
+            >Buscar</Button
+          >
         </section>
 
         <div v-if="cpfLoading" class="text-xs text-blue-500 mt-1">
@@ -266,15 +297,15 @@ onUnmounted(() => {
         </div>
 
         <div
-          v-if="cpfCollaborator"
+          v-if="cpfCollaborator.length"
           class="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg"
         >
-          <div class="text-sm font-medium">
-            {{ cpfCollaborator.name }}
-          </div>
-          <div class="text-xs text-green-600">
-            CPF: {{ cpfCollaborator.cpf }}
-          </div>
+          <h1 class="text-sm font-medium text-green-700">
+            {{ cpfCollaborator[0].name }}
+          </h1>
+          <h1 class="text-xs text-green-700">
+            CPF: {{ cpfCollaborator[0].cpf }}
+          </h1>
         </div>
       </div>
 
@@ -287,10 +318,11 @@ onUnmounted(() => {
           <FormItem>
             <FormLabel>Data de emissão *</FormLabel>
             <FormControl>
-              <Input
+              <input
                 type="datetime-local"
                 v-bind="componentField"
                 :class="{ 'border-red-500': errors.issueDate }"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </FormControl>
             <FormDescription>

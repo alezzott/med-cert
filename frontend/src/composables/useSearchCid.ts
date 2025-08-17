@@ -12,6 +12,8 @@ export function useCidSearch() {
   const cidLoading = ref(false);
   const cidError = ref<string | null>(null);
 
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   const searchCid = async (term: string): Promise<CidOption[]> => {
     if (!term || term.length < 2) {
       cidOptions.value = [];
@@ -55,9 +57,43 @@ export function useCidSearch() {
     }
   };
 
+  const debouncedSearchCid = (
+    term: string,
+    delay: number = 500,
+  ): Promise<CidOption[]> => {
+    return new Promise((resolve) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      if (!term || term.length < 2) {
+        cidOptions.value = [];
+        cidLoading.value = false;
+        resolve([]);
+        return;
+      }
+
+      cidLoading.value = true;
+      debounceTimer = setTimeout(async () => {
+        try {
+          const results = await searchCid(term);
+          resolve(results);
+        } catch (error) {
+          resolve([]);
+        }
+      }, delay);
+    });
+  };
+
   const clearCidSearch = () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+
     cidOptions.value = [];
     cidError.value = null;
+    cidLoading.value = false;
   };
 
   return {
@@ -65,6 +101,7 @@ export function useCidSearch() {
     cidLoading,
     cidError,
     searchCid,
+    debouncedSearchCid,
     clearCidSearch,
   };
 }
