@@ -15,6 +15,8 @@ import { useAuth } from '@/composables/useAuth';
 import { sidebarMenu } from '@/routes/sidebar.menu';
 import { Home, Users, FileText, PlusSquare, LogOut } from 'lucide-vue-next';
 import logo from '../assets/logo-icon.png';
+import { useRoute } from 'vue-router';
+import { computed } from 'vue';
 
 const icons = {
   dashboard: Home,
@@ -29,6 +31,16 @@ const { logout } = useAuth();
 const handleLogout = () => {
   logout();
 };
+
+const route = useRoute();
+
+const currentPageName = computed(() => {
+  const exactItem = sidebarMenu.find((m) => route.path === m.to);
+  if (exactItem) return exactItem.name;
+
+  const prefixItem = sidebarMenu.find((m) => route.path.startsWith(m.to));
+  return prefixItem ? prefixItem.name : 'Dashboard';
+});
 </script>
 
 <template>
@@ -78,7 +90,7 @@ const handleLogout = () => {
       <header class="flex h-16 items-center gap-4 border-b bg-white px-6">
         <SidebarTrigger class="text-gray-600 hover:text-gray-900" />
         <div class="h-6 w-px bg-gray-200" />
-        <h1 class="text-lg font-semibold">Dashboard</h1>
+        <h1 class="text-lg font-semibold">{{ currentPageName }}</h1>
       </header>
 
       <main class="flex-1 p-6 bg-gray-50">
