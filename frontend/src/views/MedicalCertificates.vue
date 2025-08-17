@@ -146,17 +146,7 @@ function openAddCertificateDialog(collaborator: string | null) {
   <div class="p-4 md:p-8">
     <section
       class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8"
-    >
-      <h1 class="text-xl md:text-2xl font-bold">Atestados Médicos</h1>
-      <Button
-        size="sm"
-        variant="default"
-        @click="openAddCertificateDialog(null)"
-        class="cursor-pointer whitespace-nowrap"
-      >
-        Adicionar Atestado
-      </Button>
-    </section>
+    ></section>
 
     <Spinner v-if="loading" />
     <div v-else-if="error" class="text-red-500 text-center p-4">
@@ -215,14 +205,19 @@ function openAddCertificateDialog(collaborator: string | null) {
             class="cursor-pointer whitespace-nowrap"
             size="sm"
             @click="handleSearchInput"
+            :disabled="!searchInput"
           >
             Buscar
           </Button>
         </div>
-
-        <div class="text-sm text-muted-foreground whitespace-nowrap">
-          Total: {{ total }}
-        </div>
+        <Button
+          size="sm"
+          variant="default"
+          @click="openAddCertificateDialog(null)"
+          class="cursor-pointer whitespace-nowrap"
+        >
+          Adicionar Atestado
+        </Button>
       </div>
 
       <div class="rounded-md border overflow-hidden">
@@ -334,10 +329,10 @@ function openAddCertificateDialog(collaborator: string | null) {
         </div>
       </div>
 
-      <div
-        class="flex flex-col sm:flex-row items-center justify-center gap-4 py-4"
-      >
-        <div class="flex items-center space-x-1 sm:space-x-2">
+      <div class="flex flex-col sm:flex-row items-center gap-4 py-4">
+        <div
+          class="flex items-center justify-center space-x-1 sm:space-x-2 w-full"
+        >
           <Button
             variant="outline"
             size="sm"
@@ -387,6 +382,11 @@ function openAddCertificateDialog(collaborator: string | null) {
           >
             <ChevronsRight class="h-4 w-4" />
           </Button>
+        </div>
+        <div class="flex justify-end">
+          <h1 class="text-muted-foreground whitespace-nowrap">
+            Total: {{ total }}
+          </h1>
         </div>
       </div>
     </div>
