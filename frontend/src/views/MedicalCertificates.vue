@@ -144,10 +144,6 @@ function openAddCertificateDialog(collaborator: string | null) {
 
 <template>
   <div class="p-4 md:p-8">
-    <section
-      class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8"
-    ></section>
-
     <Spinner v-if="loading" />
     <div v-else-if="error" class="text-red-500 text-center p-4">
       {{ error }}

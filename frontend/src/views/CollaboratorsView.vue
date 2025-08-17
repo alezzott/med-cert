@@ -217,14 +217,6 @@ onMounted(() => {
 
 <template>
   <main class="p-4 md:p-8">
-    <header
-      class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8"
-      aria-label="Cabeçalho de colaboradores"
-    >
-      <h1 class="text-xl md:text-2xl font-bold">Colaboradores</h1>
-      <AddCollaboratorDialog @saved="fetchCollaborators" />
-    </header>
-
     <section aria-live="polite">
       <Spinner v-if="loading" />
       <div v-else-if="error" class="text-red-500 text-center p-4" role="alert">
@@ -233,11 +225,11 @@ onMounted(() => {
 
       <div v-else>
         <form
-          class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4"
+          class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-4"
           @submit.prevent="handleSearchInput"
           aria-label="Filtros de colaboradores"
         >
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center">
             <label
               for="pageSize"
               class="text-sm text-muted-foreground whitespace-nowrap"
@@ -266,10 +258,7 @@ onMounted(() => {
             </Select>
           </div>
 
-          <div class="flex items-center gap-2 w-full md:w-full max-md:max-w-md">
-            <label for="searchInput" class="sr-only"
-              >Buscar por nome ou CPF</label
-            >
+          <div class="flex items-center gap-2 w-full max-md:max-w-md">
             <Input
               id="searchInput"
               v-model="searchValue"
@@ -281,7 +270,6 @@ onMounted(() => {
             <Button
               v-if="searchValue"
               class="cursor-pointer whitespace-nowrap"
-              size="sm"
               variant="outline"
               aria-label="Limpar busca"
               @click="
@@ -295,7 +283,6 @@ onMounted(() => {
             </Button>
             <Button
               type="submit"
-              size="sm"
               class="whitespace-nowrap"
               aria-label="Buscar colaboradores"
               :disabled="!searchValue || !searchValue.trim()"
@@ -303,6 +290,7 @@ onMounted(() => {
               Buscar
             </Button>
           </div>
+          <AddCollaboratorDialog @saved="fetchCollaborators" />
         </form>
 
         <div v-if="searchLoading">
@@ -401,10 +389,12 @@ onMounted(() => {
         </section>
 
         <nav
-          class="flex flex-col sm:flex-row items-center justify-center gap-4 py-4"
+          class="flex flex-col sm:flex-row gap-4 py-4"
           aria-label="Paginação"
         >
-          <div class="flex items-center space-x-1 sm:space-x-2">
+          <div
+            class="flex items-center justify-center space-x-1 sm:space-x-2 w-full"
+          >
             <Button
               variant="outline"
               size="sm"
@@ -456,6 +446,11 @@ onMounted(() => {
             >
               <ChevronsRight class="h-4 w-4" />
             </Button>
+          </div>
+          <div class="flex justify-end">
+            <h1 class="text-muted-foreground whitespace-nowrap">
+              Total: {{ total }}
+            </h1>
           </div>
         </nav>
       </div>
