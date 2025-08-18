@@ -19,6 +19,7 @@ describe('CollaboratorService', () => {
       updateStatus: jest.fn(),
       findByCpf: jest.fn(),
       findByEmail: jest.fn(),
+      findByCpfExists: jest.fn(),
     };
     service = new CollaboratorService(repository, console);
   });

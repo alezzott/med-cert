@@ -31,6 +31,7 @@ describe('CollaboratorController (integração)', () => {
           useValue: {
             findByEmail: jest.fn(function (this: void) {}),
             findByCpf: jest.fn(function (this: void) {}),
+            findByCpfExists: jest.fn(function (this: void) {}),
             createCollaborator: jest.fn(function (this: void) {}),
             listCollaboratorsPaginated: jest.fn(function (this: void) {}),
             updateCollaboratorStatus: jest.fn(function (this: void) {}),
@@ -62,7 +63,8 @@ describe('CollaboratorController (integração)', () => {
       birthDate: '2000-01-01',
     };
     useCase.findByEmail.mockResolvedValue(null);
-    useCase.findByCpf.mockResolvedValue(null);
+    useCase.findByCpf.mockResolvedValue([]);
+    useCase.findByCpfExists.mockResolvedValue(null);
     useCase.createCollaborator.mockResolvedValue({
       id: '1',
       name: dto.name,
@@ -109,18 +111,24 @@ describe('CollaboratorController (integração)', () => {
   });
 
   it('deve buscar colaborador por cpf', async () => {
-    useCase.findByCpf.mockResolvedValue({
+    useCase.findByCpf.mockResolvedValue([
+      {
+        id: '1',
+        name: 'João',
+        email: 'joao@email.com',
+        cpf: '12345678900',
+        birthDate: new Date('2000-01-01'),
+        status: CollaboratorStatus.ACTIVE,
+        role: CollaboratorRole.COLLABORATOR,
+        createdAt: new Date(),
+      },
+    ]);
+    const result = await controller.findByCpf('12345678900');
+    expect(result[0]).toMatchObject({
       id: '1',
       name: 'João',
-      email: 'joao@email.com',
       cpf: '12345678900',
-      birthDate: new Date('2000-01-01'),
-      status: CollaboratorStatus.ACTIVE,
-      role: CollaboratorRole.COLLABORATOR,
-      createdAt: new Date(),
     });
-    const result = await controller.findByCpf('12345678900');
-    expect(result).toMatchObject({ id: '1', name: 'João', cpf: '12345678900' });
     expect(useCase.findByCpf).toHaveBeenCalledWith('12345678900', undefined);
   });
 
@@ -153,7 +161,6 @@ describe('CollaboratorController (integração)', () => {
       name: 'João',
       email: 'joao@email.com',
       cpf: '12345678900',
-      birthDate: '01/01/2000 - 00:00:00',
       status: CollaboratorStatus.INACTIVE,
     });
     expect(useCase.updateCollaboratorStatus).toHaveBeenCalledWith(
