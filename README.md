@@ -113,7 +113,6 @@ O backend é construído com **NestJS** e **MongoDB**, com autenticação **JWT*
 3. **Funcionamento da integração:**
    - Autenticação via OAuth2 Client Credentials
    - Token armazenado em cache e renovado automaticamente
-   - Fallback em caso de indisponibilidade da API externa
 
 > **Atenção:** Nunca compartilhe suas credenciais publicamente.
 
@@ -144,11 +143,36 @@ Embora o projeto utilize conceitos básicos de DDD no momento (módulos, value o
 - DTOs para criação e retorno
 
 ### 🌐 Módulo de Integração CID/OMS
-- Cliente OMS com OAuth2 Client Credentials
-- Busca de CID por termo ou código
-- Cache de token e renovação automática
-- Fallback em caso de falha da API
-- Tratamento de erros e limites de requisição
+
+#### Cache e Fallback
+
+O sistema implementa uma estratégia robusta para garantir disponibilidade e performance na integração com a API da OMS:
+
+##### 📦 Sistema de Cache
+
+- **Cache de Token OAuth2**: Token de autenticação armazenado em memória com renovação automática antes do vencimento
+- **Cache de Respostas CID**: Resultados de busca são cacheados temporariamente para reduzir latência e consumo da API
+- **TTL (Time To Live)**: Configuração flexível de tempo de vida do cache
+
+##### 🔄 Sistema de Fallback
+
+1. **Fallback de Token**
+   - Se o token OAuth2 falhar, tenta renovação automática
+   - Em caso de falha crítica, retorna códigos CID básicos pré-configurados
+
+2. **Fallback de API**
+   - **Timeout configurável**: Requisições com limite de tempo para evitar travamento
+   - **Retry automático**: Até 3 tentativas
+   - **Dados locais**: Base de códigos CID essenciais armazenada localmente
+
+3. **Fallback de Conectividade**
+   - Detecta falhas de rede e ativa modo offline
+   - Retorna sugestões baseadas em cache local
+
+4. **Limite de Requisições por Usuário**
+   - **10 requisições por minuto** por usuário autenticado
+   - **5 requisições por minuto** para busca de CID especificamente
+   - Contador individual por sessão
 
 ---
 
