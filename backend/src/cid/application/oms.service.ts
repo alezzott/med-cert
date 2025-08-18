@@ -4,14 +4,12 @@ import { OmsClient } from '../infra/oms.client';
 import { CidResponseDto } from '../dto/oms-response.dto';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
-const SEARCH_CACHE_TTL = 3600;
-const CODE_CACHE_TTL = 86400;
+const SEARCH_CACHE_TTL = 86400;
 const OMS_TOKEN_CACHE_KEY = 'oms:token';
 const MSG_TOKEN_CONFIG_ERROR =
   'OMS_CLIENT_ID ou OMS_CLIENT_SECRET não configurados';
 const MSG_TOKEN_INVALID = 'Token OMS inválido';
 const MSG_TOKEN_FETCH_ERROR = 'Falha ao autenticar na OMS';
-const MSG_CID_CODE_FETCH_ERROR = 'Falha ao buscar CID por código';
 
 @Injectable()
 export class OmsService {
@@ -26,10 +24,6 @@ export class OmsService {
   private getSearchCacheKey(term: string, locale: string = 'pt'): string {
     const normalized = encodeURIComponent(term.toLowerCase().trim());
     return `cid:search:${locale}:${normalized}`;
-  }
-
-  private getCodeCacheKey(code: string): string {
-    return `cid:code:${code.trim().toUpperCase()}`;
   }
 
   private async getToken(): Promise<string> {
@@ -77,14 +71,14 @@ export class OmsService {
         throw new Error(MSG_TOKEN_INVALID);
       }
 
-      const ttl = Math.max(tokenData.expires_in - 30, 60);
+      const ttl = Math.max(tokenData.expires_in - 300, 300);
       await this.cacheManager.set(
         OMS_TOKEN_CACHE_KEY,
         tokenData.access_token,
         ttl,
       );
       this.logger.log(
-        `[getToken] Token salvo no cache com TTL: ${ttl}`,
+        `[getToken] Token salvo no cache com TTL: ${ttl} | Token: ${tokenData.access_token}`,
         'OmsService',
       );
       return tokenData.access_token;
@@ -113,19 +107,46 @@ export class OmsService {
       return cachedResults;
     }
 
+    let token: string | undefined;
+    try {
+      token = await this.getToken();
+    } catch (error) {
+      this.logger.warn(
+        `[searchCid] Falha ao obter token OMS: ${error instanceof Error ? error.message : String(error)}`,
+        'OmsService',
+      );
+      const fallbackResults =
+        await this.cacheManager.get<CidResponseDto[]>(cacheKey);
+      if (fallbackResults) {
+        this.logger.warn(
+          '[searchCid] Usando resultado do cache por fallback (token)',
+          'OmsService',
+        );
+        return fallbackResults;
+      }
+      throw new Error('Falha ao autenticar na OMS e sem resultado em cache');
+    }
+
     try {
       this.logger.log(
         `[searchCid] Cache MISS para termo: ${term}`,
         'OmsService',
       );
-      const token = await this.getToken();
       const results = await this.omsClient.searchCid(term, token, locale);
+      this.logger.debug(`Resultados encontrados, ${JSON.stringify(results)}`);
 
-      await this.cacheManager.set(cacheKey, results, SEARCH_CACHE_TTL);
-      this.logger.log(
-        `[searchCid] Resultados salvos no cache para termo: ${term}`,
-        'OmsService',
-      );
+      if (results && results.length > 0) {
+        await this.cacheManager.set(cacheKey, results, SEARCH_CACHE_TTL);
+        this.logger.log(
+          `[searchCid] Resultados salvos no cache para termo: ${term} ${SEARCH_CACHE_TTL}`,
+          'OmsService',
+        );
+      } else {
+        this.logger.warn(
+          `[searchCid] Nenhum resultado válido retornado da OMS para termo: ${term}. Cache não será atualizado.`,
+          'OmsService',
+        );
+      }
 
       this.logger.debug(
         `[searchCid] Chave do cache gerada: ${cacheKey}`,
@@ -133,65 +154,16 @@ export class OmsService {
       );
       return results;
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        `[searchCid] Erro na busca CID: ${errMsg}`,
-        'OmsService',
-      );
-
       const fallbackResults =
         await this.cacheManager.get<CidResponseDto[]>(cacheKey);
       if (fallbackResults) {
         this.logger.warn(
-          '[searchCid] Usando resultado do cache por fallback',
+          '[searchCid] Usando resultado do cache por fallback (OMS)',
           'OmsService',
         );
         return fallbackResults;
       }
-      throw new Error(errMsg);
-    }
-  }
-
-  async getCidByCode(
-    code: string,
-    locale: string = 'pt',
-  ): Promise<CidResponseDto | null> {
-    const cacheKey = this.getCodeCacheKey(code);
-
-    const cachedCid = await this.cacheManager.get<CidResponseDto>(cacheKey);
-    if (cachedCid) {
-      this.logger.log(`Busca CID por código cache HIT: ${code}`);
-      return cachedCid;
-    }
-
-    try {
-      const token = await this.getToken();
-      const results = await this.omsClient.searchCid(code, token, locale);
-
-      const cid =
-        results.find(
-          (item) => item.code.toUpperCase() === code.trim().toUpperCase(),
-        ) ?? null;
-
-      if (cid) {
-        await this.cacheManager.set(cacheKey, cid, CODE_CACHE_TTL);
-        this.logger.log(
-          `Busca CID por código cache MISS: ${code} (salvo no cache)`,
-        );
-      }
-
-      return cid;
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-
-      console.error(errMsg);
-
-      const fallbackCid = await this.cacheManager.get<CidResponseDto>(cacheKey);
-      if (fallbackCid) {
-        console.warn('Usando resultado do cache por fallback');
-        return fallbackCid;
-      }
-      throw new Error(MSG_CID_CODE_FETCH_ERROR);
+      throw error;
     }
   }
 }
