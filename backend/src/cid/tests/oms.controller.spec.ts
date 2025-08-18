@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CidController } from '../infra/oms.controller';
 import { OmsService } from '../application/oms.service';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 describe('CidController (integração)', () => {
   let controller: CidController;
@@ -26,8 +27,12 @@ describe('CidController (integração)', () => {
           },
         },
       ],
-    }).compile();
-
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({
+        canActivate: () => true,
+      })
+      .compile();
     controller = module.get<CidController>(CidController);
     service = module.get<OmsService>(OmsService);
   });
