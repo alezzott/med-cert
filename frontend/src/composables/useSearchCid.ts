@@ -38,13 +38,6 @@ export function useCidSearch() {
       return [];
     }
 
-    if (isRateLimited.value) {
-      toast.warning('Aguarde para buscar novamente', {
-        description: `Você poderá buscar em ${retryAfter.value} segundos.`,
-      });
-      return [];
-    }
-
     cidLoading.value = true;
     cidError.value = null;
 
@@ -73,7 +66,7 @@ export function useCidSearch() {
       if (error.response?.status === 429) {
         const waitTime = 60;
         startCountdown(waitTime);
-        toast.error('Limite de buscas atingido', {
+        toast.warning('Limite de buscas atingido', {
           description:
             error.response?.data?.message ||
             'Muitas tentativas. Tente novamente em alguns instantes.',
