@@ -12,11 +12,36 @@ export function useCidSearch() {
   const cidLoading = ref(false);
   const cidError = ref<string | null>(null);
 
+  const isRateLimited = ref(false);
+  const retryAfter = ref(0);
+
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+  const startCountdown = (seconds: number) => {
+    retryAfter.value = seconds;
+    isRateLimited.value = true;
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      retryAfter.value--;
+      if (retryAfter.value <= 0) {
+        clearInterval(countdownTimer!);
+        isRateLimited.value = false;
+        retryAfter.value = 0;
+      }
+    }, 1000);
+  };
 
   const searchCid = async (term: string): Promise<CidOption[]> => {
     if (!term || term.length < 2) {
       cidOptions.value = [];
+      return [];
+    }
+
+    if (isRateLimited.value) {
+      toast.warning('Aguarde para buscar novamente', {
+        description: `Você poderá buscar em ${retryAfter.value} segundos.`,
+      });
       return [];
     }
 
@@ -45,12 +70,23 @@ export function useCidSearch() {
       return results;
     } catch (error: any) {
       cidOptions.value = [];
-      cidError.value = 'Erro ao buscar CID';
-
-      toast.error('Erro ao buscar CID', {
-        description: 'Não foi possível carregar os códigos CID',
-      });
-
+      if (error.response?.status === 429) {
+        const waitTime = 60;
+        startCountdown(waitTime);
+        toast.error('Limite de buscas atingido', {
+          description:
+            error.response?.data?.message ||
+            'Muitas tentativas. Tente novamente em alguns instantes.',
+        });
+        cidError.value = 'Rate limit atingido';
+      } else {
+        cidError.value = 'Erro ao buscar CID';
+        toast.error('Erro ao buscar CID', {
+          description:
+            error.response?.data?.message ||
+            'Não foi possível carregar os códigos CID',
+        });
+      }
       return [];
     } finally {
       cidLoading.value = false;
@@ -59,7 +95,7 @@ export function useCidSearch() {
 
   const debouncedSearchCid = (
     term: string,
-    delay: number = 500,
+    delay: number = 800,
   ): Promise<CidOption[]> => {
     return new Promise((resolve) => {
       if (debounceTimer) {
@@ -69,6 +105,11 @@ export function useCidSearch() {
       if (!term || term.length < 2) {
         cidOptions.value = [];
         cidLoading.value = false;
+        resolve([]);
+        return;
+      }
+
+      if (isRateLimited.value) {
         resolve([]);
         return;
       }
@@ -90,16 +131,23 @@ export function useCidSearch() {
       clearTimeout(debounceTimer);
       debounceTimer = null;
     }
-
+    if (countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
     cidOptions.value = [];
     cidError.value = null;
     cidLoading.value = false;
+    isRateLimited.value = false;
+    retryAfter.value = 0;
   };
 
   return {
     cidOptions,
     cidLoading,
     cidError,
+    isRateLimited,
+    retryAfter,
     searchCid,
     debouncedSearchCid,
     clearCidSearch,
