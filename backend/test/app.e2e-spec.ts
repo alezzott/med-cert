@@ -63,12 +63,11 @@ describe('App E2E', () => {
       .get(`/collaborators/search?cpf=${collaboratorCpf}`)
       .set('Authorization', `Bearer ${jwt}`)
       .expect(200);
-    const { name, cpf } = res.body as {
-      name: string;
-      cpf: string;
-    };
-    expect(cpf).toBe(collaboratorCpf);
-    expect(name).toBe('João');
+
+    const collaborators = res.body as Array<{ name: string; cpf: string }>;
+    expect(collaborators).toHaveLength(1);
+    expect(collaborators[0].cpf).toBe(collaboratorCpf);
+    expect(collaborators[0].name).toBe('João');
   });
 
   it('POST /medical-certificates - deve criar um atestado', async () => {
