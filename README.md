@@ -221,8 +221,10 @@ npm run test
 
 A API do MedCert possui documentação interativa gerada automaticamente via **Swagger**.
 
-- **Acesse:** [http://localhost:4000/docs](http://localhost:4000/docs)
-- **Autenticação:** Para testar endpoints protegidos, clique em "Authorize" e insira seu token JWT.
+- **Produção:** [https://med-cert.onrender.com/docs](https://med-cert.onrender.com/docs)
+- **Local:** [http://localhost:4000/docs](http://localhost:4000/docs) (quando executando localmente)
+
+- **Autenticação:** Para testar endpoints protegidos, clique em "Authorize" e insira seu token JWT obtido pelo endpoint **/auth/login**
 
 ### Principais recursos do Swagger
 
