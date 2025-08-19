@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useForm } from 'vee-validate';
-import * as z from 'zod';
-import { toTypedSchema } from '@vee-validate/zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,54 +10,34 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import Input from '@/components/ui/input/Input.vue';
-import {
-  FormField,
-  FormLabel,
-  FormMessage,
-  Form,
-  FormControl,
-  FormItem,
-} from '@/components/ui/form';
-import FormDescription from '../ui/form/FormDescription.vue';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CalendarIcon } from 'lucide-vue-next';
-import {
-  CalendarDate,
-  parseDate,
-  today,
-  getLocalTimeZone,
-} from '@internationalized/date';
+import { Form } from '@/components/ui/form';
+import { parseDate, type DateValue } from '@internationalized/date';
 import { useCreateCollaborator } from '@/composables/useCreateCollaborator';
-import { applyCpfMask, removeCpfMask } from '@/utils/cpf-mask.utils';
+import { removeCpfMask } from '@/utils/cpf-mask.utils';
+import CollaboratorsFormFields from './dialog/CollaboratorsFormFields.vue';
+import { CollaboratorSchema } from '@/schema/CollaboratorSchema';
+import { Loader2 } from 'lucide-vue-next';
+
+type CollaboratorForm = {
+  name: string;
+  email: string;
+  cpf: string;
+  birthDate: string;
+};
 
 const openDialog = ref(false);
 const saving = ref(false);
 const error = ref('');
 const { createCollaborator, error: apiError } = useCreateCollaborator();
 
-const schema = toTypedSchema(
-  z.object({
-    name: z.string().min(1, 'Nome obrigatório'),
-    email: z.string().nonempty('E-mail obrigatório').email('E-mail inválido'),
-    cpf: z.string().nonempty('CPF obrigatório').min(11, 'CPF inválido'),
-    birthDate: z
-      .string()
-      .nonempty('Data obrigatória')
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
-  }),
-);
-
-const { resetForm, setValues } = useForm({
-  validationSchema: schema,
+const { resetForm, setValues } = useForm<CollaboratorForm>({
   initialValues: {
     name: '',
     email: '',
     cpf: '',
     birthDate: '',
   },
-  validateOnMount: true,
+  validateOnMount: false,
 });
 
 const emit = defineEmits<{
@@ -72,7 +50,7 @@ watch(openDialog, (newValue) => {
   }
 });
 
-const onSubmit = async (formValues: any) => {
+const onSubmit = async (formValues: CollaboratorForm) => {
   saving.value = true;
   try {
     const payload = {
@@ -92,7 +70,7 @@ const onSubmit = async (formValues: any) => {
     });
     openDialog.value = false;
     emit('saved');
-  } catch (e: any) {
+  } catch (e) {
     error.value = apiError.value || 'Erro ao salvar colaborador';
     return false;
   } finally {
@@ -111,7 +89,7 @@ const stringToCalendarDate = (dateString: string) => {
   }
 };
 
-const calendarDateToString = (date: any) => {
+const calendarDateToString = (date: DateValue | undefined) => {
   if (!date || typeof date.toString !== 'function') {
     return '';
   }
@@ -132,7 +110,12 @@ const formatDateForDisplay = (dateString: string) => {
 </script>
 
 <template>
-  <Form v-slot="{ handleSubmit }" as="" keep-values :validation-schema="schema">
+  <Form
+    v-slot="{ handleSubmit }"
+    as=""
+    keep-values
+    :validation-schema="CollaboratorSchema"
+  >
     <Dialog v-model:open="openDialog">
       <DialogTrigger as-child>
         <Button>Adicionar novo colaborador</Button>
@@ -141,104 +124,20 @@ const formatDateForDisplay = (dateString: string) => {
         <DialogHeader>
           <DialogTitle>Adicionar colaborador</DialogTitle>
         </DialogHeader>
-        <form id="collaboratorForm" @submit.prevent="handleSubmit(onSubmit)">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-4">
-            <FormField v-slot="{ componentField }" name="name">
-              <FormItem>
-                <FormLabel>Nome completo</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    placeholder="Nome"
-                    v-bind="componentField"
-                  />
-                </FormControl>
-                <FormDescription>
-                  Informe o nome completo do colaborador.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-            <FormField v-slot="{ componentField }" name="email">
-              <FormItem>
-                <FormLabel>E-mail</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="E-mail"
-                    v-bind="componentField"
-                  />
-                </FormControl>
-                <FormDescription> E-mail do colaborador. </FormDescription>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-            <FormField v-slot="{ value, setValue }" name="cpf">
-              <FormItem>
-                <FormLabel>CPF</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="CPF"
-                    :model-value="value"
-                    maxlength="14"
-                    @update:modelValue="
-                      (val) => setValue(applyCpfMask(String(val)))
-                    "
-                  />
-                </FormControl>
-                <FormDescription> CPF válido do colaborador. </FormDescription>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-            <FormField v-slot="{ value, setValue }" name="birthDate">
-              <FormItem class="flex flex-col">
-                <FormLabel>Data de nascimento</FormLabel>
-                <Popover>
-                  <PopoverTrigger as-child>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        :class="[
-                          'w-full justify-start text-left font-normal',
-                          !value && 'text-muted-foreground',
-                        ]"
-                      >
-                        <CalendarIcon class="mr-2 h-4 w-4" />
-                        <span>{{ formatDateForDisplay(value) }}</span>
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent class="w-auto p-0" align="start">
-                    <Calendar
-                      :model-value="stringToCalendarDate(value)"
-                      @update:model-value="
-                        (date) => setValue(calendarDateToString(date))
-                      "
-                      mode="single"
-                      initial-focus
-                      :max-value="today(getLocalTimeZone())"
-                      :min-value="new CalendarDate(1900, 1, 1)"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Data de nascimento do colaborador.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-          </div>
+        <form
+          id="collaboratorForm"
+          @submit.prevent="handleSubmit(onSubmit as never)"
+        >
+          <CollaboratorsFormFields
+            :formatDateForDisplay="formatDateForDisplay"
+            :stringToCalendarDate="stringToCalendarDate"
+            :calendarDateToString="calendarDateToString"
+          />
+
           <DialogFooter>
-            <Button
-              type="submit"
-              form="collaboratorForm"
-              :disabled="saving"
-              class="mt-4"
-            >
-              <span v-if="saving">Salvando...</span>
-              <span v-else>Salvar</span>
+            <Button type="submit" form="collaboratorForm" :disabled="saving">
+              {{ saving ? 'Salvando' : 'Salvar' }}
+              <Loader2 v-if="saving" class="w-4 h-4 m-auto flex animate-spin" />
             </Button>
           </DialogFooter>
         </form>
