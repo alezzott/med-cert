@@ -21,15 +21,18 @@
 
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
+import type { Certificate } from '@/interfaces/certificates';
 import type { Collaborator } from '@/interfaces/collaborator';
 import type { Column } from '@tanstack/vue-table';
 import { ArrowDown, ArrowUp } from 'lucide-vue-next';
 
-defineProps<{
-  column: Column<Collaborator, unknown>;
-}>();
+type SortButtonItemProps<T> = {
+  column: Column<T, unknown>;
+};
 
-function getSortAriaLabel(column: Column<Collaborator, unknown>): string {
+defineProps<SortButtonItemProps<any>>();
+
+function getSortAriaLabel(column: Column<Collaborator | Certificate, unknown>) {
   const columnName = column.columnDef.header;
   const sortState = column.getIsSorted();
 
@@ -42,7 +45,7 @@ function getSortAriaLabel(column: Column<Collaborator, unknown>): string {
 }
 
 function getSortIconColor(
-  column: Column<Collaborator, unknown>,
+  column: Column<Collaborator | Certificate, unknown>,
   direction: 'asc' | 'desc',
 ): string {
   const sortState = column.getIsSorted();

@@ -2,7 +2,7 @@ import Layout from '@/layout/Layout.vue';
 import { useAuthStore } from '@/stores/auth.store';
 import CollaboratorsView from '@/views/CollaboratorsView.vue';
 import Dashboard from '@/views/Dashboard.vue';
-import MedicalCertificates from '@/views/MedicalCertificates.vue';
+import MedicalCertificatesView from '@/views/MedicalCertificatesView.vue';
 import {
   createRouter,
   createWebHistory,
@@ -55,7 +55,7 @@ const routes = [
     children: [
       { path: '', component: Dashboard },
       { path: 'collaborators', component: CollaboratorsView },
-      { path: 'medical-certificates', component: MedicalCertificates },
+      { path: 'medical-certificates', component: MedicalCertificatesView },
     ],
     meta: { requiresAuth: true },
     beforeEnter: requireAuth,
