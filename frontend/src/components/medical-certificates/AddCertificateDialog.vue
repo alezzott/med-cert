@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input/Input.vue';
 import FormDescription from '@/components/ui/form/FormDescription.vue';
+import { CalendarIcon } from 'lucide-vue-next';
 import {
   FormField,
   FormLabel,
@@ -20,12 +21,14 @@ import {
   FormControl,
   FormItem,
 } from '@/components/ui/form';
-import { Check } from 'lucide-vue-next';
+import { Loader2 } from 'lucide-vue-next';
 import { useCollaboratorSearch } from '@/composables/useSearchCollaborator';
 import { useCreateCertificate } from '@/composables/useCreateCertificate';
 import { useCidSearch } from '@/composables/useSearchCid';
 import { applyCpfMask, removeCpfMask } from '@/utils/cpf-mask.utils';
 import { useMedicalCertificates } from '@/composables/useFetchCertificates';
+import SelectCid from './dialog/SelectCid.vue';
+import SearchCollaboratorCpf from './dialog/SearchCollaboratorCpf.vue';
 
 const props = defineProps<{
   open: boolean;
@@ -254,162 +257,80 @@ function clearCpfInput() {
         <DialogTitle>Adicionar novo atestado</DialogTitle>
       </DialogHeader>
 
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">
-          Buscar colaborador por CPF *
-        </label>
-        <section class="flex flex-row gap-3">
-          <input
-            :value="cpfDisplay"
-            @input="onCpfInput"
-            placeholder="Digite o CPF (ex: 123.456.789-01)"
-            :class="{ 'border-red-500': errors.collaboratorId }"
-            maxlength="14"
-            class="w-full pl-3 pr-10 h-10 rounded-md border"
-            type="text"
-            inputMode="numeric"
-          />
-          <Button
-            size="lg"
-            variant="outline"
-            type="button"
-            @click="clearCpfInput"
-            v-if="cpfDisplay"
-          >
-            Limpar
-          </Button>
-          <Button
-            size="lg"
-            @click="handleCpfInput"
-            :disabled="removeCpfMask(cpfDisplay).length < 11"
-            >Buscar</Button
-          >
-        </section>
-
-        <div v-if="cpfLoading" class="text-xs text-blue-500 mt-1">
-          Buscando colaborador...
-        </div>
-        <div v-if="cpfError" class="text-xs text-red-500 mt-1">
-          {{ cpfError }}
-        </div>
-        <div v-if="errors.collaboratorId" class="text-xs text-red-500 mt-1">
-          {{ errors.collaboratorId }}
-        </div>
-
-        <div
-          v-if="cpfCollaborator.length"
-          class="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg"
-        >
-          <h1 class="text-sm font-medium text-green-700">
-            {{ cpfCollaborator[0].name }}
-          </h1>
-          <h1 class="text-xs text-green-700">
-            CPF: {{ cpfCollaborator[0].cpf }}
-          </h1>
-        </div>
-      </div>
+      <SearchCollaboratorCpf
+        :value="cpfDisplay"
+        :error="cpfError || errors.collaboratorId"
+        :collaborator="cpfCollaborator"
+        :loading="cpfLoading"
+        @update:value="cpfDisplay = $event"
+        @search="handleCpfInput"
+        @clear="clearCpfInput"
+        @cpf="onCpfInput"
+      />
 
       <form @submit.prevent="onSubmit" class="space-y-4">
         <FormField v-slot="{ componentField }" name="collaboratorId">
           <input type="hidden" v-bind="componentField" />
         </FormField>
 
-        <FormField v-slot="{ componentField }" name="issueDate">
-          <FormItem>
-            <FormLabel>Data de emissão *</FormLabel>
-            <FormControl>
-              <input
-                type="datetime-local"
-                v-bind="componentField"
-                :class="{ 'border-red-500': errors.issueDate }"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </FormControl>
-            <FormDescription>
-              Data e hora da emissão do atestado.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        </FormField>
+        <section class="flex flex-col md:flex-row gap-2 items-center">
+          <div class="w-full">
+            <FormField v-slot="{ componentField }" name="issueDate">
+              <FormItem>
+                <FormLabel>Data de emissão *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="datetime-local"
+                    v-bind="componentField"
+                    :class="{ 'border-red-500': errors.issueDate }"
+                    class="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <input hidden />
+                  <CalendarIcon class="ms-auto h-4 w-4 opacity-50" />
+                </FormControl>
+                <FormDescription>
+                  Data e hora da emissão do atestado.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+          </div>
+          <div class="w-full">
+            <FormField v-slot="{ componentField }" name="leaveDays">
+              <FormItem>
+                <FormLabel>Dias de afastamento *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="365"
+                    v-bind="componentField"
+                    class="w-full"
+                    :class="{ 'border-red-500': errors.leaveDays }"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Quantidade de dias de afastamento (1 a 365).
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+          </div>
+        </section>
 
-        <FormField v-slot="{ componentField }" name="leaveDays">
-          <FormItem>
-            <FormLabel>Dias de afastamento *</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                min="1"
-                max="365"
-                v-bind="componentField"
-                :class="{ 'border-red-500': errors.leaveDays }"
-              />
-            </FormControl>
-            <FormDescription>
-              Quantidade de dias de afastamento (1 a 365).
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-
-        <FormField v-slot="{ value }" name="cidCode">
+        <FormField name="cidCode">
           <FormItem>
             <FormLabel>CID *</FormLabel>
             <FormControl>
-              <div class="relative">
-                <input
-                  class="w-full pl-3 pr-10 h-10 rounded-md border"
-                  :value="cidSearchTerm"
-                  placeholder="Digite para buscar CID (ex: F32)..."
-                  @input="handleCidInput"
-                  :class="{ 'border-red-500': errors.cidCode }"
-                />
-                <div
-                  v-if="cidLoading"
-                  class="absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                  <div
-                    class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
-                  ></div>
-                </div>
-
-                <div
-                  v-if="cidOptions.length"
-                  class="absolute left-0 top-full mt-1 w-full max-h-60 overflow-y-auto border rounded-md bg-white shadow-lg z-50"
-                >
-                  <div
-                    v-for="option in cidOptions"
-                    :key="option.code"
-                    @click="() => selectCid(option)"
-                    class="cursor-pointer hover:bg-gray-50 px-3 py-2 border-b last:border-b-0"
-                  >
-                    <div class="flex items-center justify-between w-full">
-                      <span class="text-sm">
-                        <strong class="text-primary">{{ option.code }}</strong>
-                        <span class="text-muted-foreground ml-2">{{
-                          option.title
-                        }}</span>
-                      </span>
-                      <Check
-                        v-if="value === option.code"
-                        class="h-4 w-4 text-primary ml-2 flex-shrink-0"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  v-if="
-                    cidSearchTerm &&
-                    cidSearchTerm.length >= 2 &&
-                    !cidLoading &&
-                    cidOptions.length === 0 &&
-                    !selectedCid
-                  "
-                  class="absolute overflow-x-scroll left-0 top-full mt-1 w-full rounded-md border bg-white p-3 text-center text-sm text-gray-500 shadow-lg z-50"
-                >
-                  Nenhum CID encontrado para "{{ cidSearchTerm }}"
-                </div>
-              </div>
+              <SelectCid
+                v-model="cidSearchTerm"
+                :error="errors.cidCode"
+                :options="cidOptions"
+                :loading="cidLoading"
+                :selected="selectedCid"
+                @input="handleCidInput"
+                @select="selectCid"
+              />
             </FormControl>
             <FormDescription>
               Código CID. Digite pelo menos 2 caracteres para buscar.
@@ -424,7 +345,7 @@ function clearCpfInput() {
             <FormControl>
               <textarea
                 v-bind="componentField"
-                class="w-full border rounded px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#90ffee]"
                 :class="{ 'border-red-500': errors.observations }"
                 rows="3"
                 placeholder="Observações adicionais sobre o atestado..."
@@ -444,7 +365,7 @@ function clearCpfInput() {
             @click="dialogOpen = false"
             class="cursor-pointer"
           >
-            Cancelar
+            cancelar
           </Button>
           <Button
             type="submit"
@@ -452,13 +373,11 @@ function clearCpfInput() {
             class="cursor-pointer"
             :disabled="!canSubmit(values) || isCreating"
           >
-            <div v-if="isCreating" class="flex items-center gap-2">
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-              ></div>
-              Criando...
-            </div>
-            <span v-else>salvar</span>
+            {{ isCreating ? 'Salvando' : 'Salvar' }}
+            <Loader2
+              v-if="isCreating"
+              class="w-4 h-4 m-auto flex animate-spin"
+            />
           </Button>
         </DialogFooter>
       </form>
