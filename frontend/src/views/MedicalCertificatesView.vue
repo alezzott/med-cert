@@ -73,12 +73,6 @@ function parseCustomDate(dateStr: string) {
 
 const columns = [
   {
-    accessorKey: 'collaboratorId',
-    header: 'ID do Colaborador',
-    cell: ({ row }: any) => row.getValue('collaboratorId'),
-    enableSorting: true,
-  },
-  {
     accessorKey: 'name',
     header: 'Nome do Colaborador',
     cell: ({ row }: any) => row.getValue('name') || '-',

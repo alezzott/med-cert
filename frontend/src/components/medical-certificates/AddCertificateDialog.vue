@@ -135,7 +135,7 @@ function handleCidInput(e: Event) {
 
   cidSearchTimeout.value = window.setTimeout(() => {
     searchCid(value);
-  }, 400);
+  }, 800);
 }
 
 function handleCpfInput() {
@@ -285,8 +285,6 @@ function clearCpfInput() {
                     :class="{ 'border-red-500': errors.issueDate }"
                     class="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <input hidden />
-                  <CalendarIcon class="ms-auto h-4 w-4 opacity-50" />
                 </FormControl>
                 <FormDescription>
                   Data e hora da emissão do atestado.
@@ -345,7 +343,7 @@ function clearCpfInput() {
             <FormControl>
               <textarea
                 v-bind="componentField"
-                class="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#90ffee]"
+                class="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring focus:ring-gray-300"
                 :class="{ 'border-red-500': errors.observations }"
                 rows="3"
                 placeholder="Observações adicionais sobre o atestado..."
