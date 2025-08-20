@@ -13,7 +13,6 @@ import {
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input/Input.vue';
 import FormDescription from '@/components/ui/form/FormDescription.vue';
-import { CalendarIcon } from 'lucide-vue-next';
 import {
   FormField,
   FormLabel,
