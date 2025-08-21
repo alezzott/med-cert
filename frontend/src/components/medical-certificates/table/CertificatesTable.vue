@@ -63,9 +63,6 @@
                 <h3 class="font-semibold text-lg">
                   {{ row.getValue('name') || 'Colaborador não identificado' }}
                 </h3>
-                <p class="text-sm text-gray-600">
-                  ID: {{ row.getValue('collaboratorId') }}
-                </p>
               </div>
               <div class="text-right">
                 <span

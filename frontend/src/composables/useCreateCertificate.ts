@@ -1,6 +1,8 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import { toast } from 'vue-sonner';
+import dayjs from 'dayjs';
+import { getErrorMessage } from '@/utils/get-error.utils';
 
 export interface CreateCertificatePayload {
   collaboratorId: string;
@@ -12,7 +14,7 @@ export interface CreateCertificatePayload {
 
 export interface CreateCertificateOptions {
   onSuccess?: () => void;
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
   showToasts?: boolean;
 }
 
@@ -98,12 +100,17 @@ export function useCreateCertificate() {
       return {
         success: false,
         error: errorMessage,
-        details: err.response?.data,
+        details: err?.response?.data,
       };
     } finally {
       isLoading.value = false;
     }
   };
+
+  function parseIssueDate(issueDate: string): dayjs.Dayjs {
+    const [datePart, timePart] = issueDate.split(' - ');
+    return dayjs(`${datePart} ${timePart}`, 'DD/MM/YYYY HH:mm:ss', true);
+  }
 
   const validatePayload = (payload: CreateCertificatePayload): string[] => {
     const errors: string[] = [];
@@ -115,8 +122,8 @@ export function useCreateCertificate() {
     if (!payload.issueDate?.trim()) {
       errors.push('Data de emissão é obrigatória');
     } else {
-      const date = new Date(payload.issueDate);
-      if (isNaN(date.getTime())) {
+      const date = parseIssueDate(payload.issueDate);
+      if (!date.isValid()) {
         errors.push('Data de emissão inválida');
       }
     }
@@ -137,45 +144,16 @@ export function useCreateCertificate() {
   };
 
   const processPayload = (payload: CreateCertificatePayload) => {
+    const date = parseIssueDate(payload.issueDate);
+    const localDate = date.format('YYYY-MM-DDTHH:mm:ss');
+
     return {
       collaboratorId: payload.collaboratorId.trim(),
-      issueDate: new Date(payload.issueDate).toISOString(),
+      issueDate: localDate,
       leaveDays: Number(payload.leaveDays),
       cidCode: payload.cidCode.trim().toUpperCase(),
       observations: payload.observations?.trim() || '',
     };
-  };
-
-  const getErrorMessage = (error: any): string => {
-    if (error.response?.data?.message) {
-      return error.response.data.message;
-    }
-
-    if (error.response?.status === 400) {
-      return 'Dados inválidos. Verifique os campos e tente novamente.';
-    }
-
-    if (error.response?.status === 401) {
-      return 'Sessão expirada. Faça login novamente.';
-    }
-
-    if (error.response?.status === 403) {
-      return 'Você não tem permissão para criar atestados.';
-    }
-
-    if (error.response?.status === 404) {
-      return 'Colaborador ou CID não encontrado.';
-    }
-
-    if (error.response?.status >= 500) {
-      return 'Erro interno do servidor. Tente novamente mais tarde.';
-    }
-
-    if (error.code === 'NETWORK_ERROR') {
-      return 'Erro de conexão. Verifique sua internet.';
-    }
-
-    return 'Erro inesperado ao criar atestado.';
   };
 
   const clearError = () => {

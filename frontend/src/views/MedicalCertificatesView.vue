@@ -15,6 +15,7 @@ import PageSizeSelector from '@/components/medical-certificates/table/PageSizeSe
 import MedialCertificationFilter from '@/components/medical-certificates/table/MedialCertificationFilter.vue';
 import CertificatesTable from '@/components/medical-certificates/table/CertificatesTable.vue';
 import PaginationCertificateTable from '@/components/medical-certificates/table/PaginationCertificateTable.vue';
+import type { Collaborator } from '@/interfaces/collaborator';
 
 const { certificates, loading, error, total, fetchCertificates } =
   useMedicalCertificates();
@@ -138,9 +139,9 @@ onMounted(() => {
 });
 
 const addCertificateDialogOpen = ref(false);
-const selectedCollaborator = ref<string | null>(null);
+const selectedCollaborator = ref<Collaborator | undefined>(undefined);
 
-function openAddCertificateDialog(collaborator: string | null) {
+function openAddCertificateDialog(collaborator: Collaborator | undefined) {
   selectedCollaborator.value = collaborator;
   addCertificateDialogOpen.value = true;
 }
@@ -171,7 +172,7 @@ function openAddCertificateDialog(collaborator: string | null) {
 
         <Button
           variant="default"
-          @click="openAddCertificateDialog(null)"
+          @click="openAddCertificateDialog(undefined)"
           class="cursor-pointer whitespace-nowrap"
         >
           Adicionar Atestado

@@ -26,7 +26,7 @@ function onClear() {
 
 <template>
   <div>
-    <label class="block text-sm font-medium mb-1">
+    <label class="block text-sm font-medium my-2">
       Buscar colaborador por CPF *
     </label>
     <section class="flex flex-row gap-2">

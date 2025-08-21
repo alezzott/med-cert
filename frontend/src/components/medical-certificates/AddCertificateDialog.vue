@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import { useForm } from 'vee-validate';
-import * as z from 'zod';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   Dialog,
@@ -20,7 +19,7 @@ import {
   FormControl,
   FormItem,
 } from '@/components/ui/form';
-import { Loader2 } from 'lucide-vue-next';
+import { CalendarIcon, ClockIcon, Loader2 } from 'lucide-vue-next';
 import { useCollaboratorSearch } from '@/composables/useSearchCollaborator';
 import { useCreateCertificate } from '@/composables/useCreateCertificate';
 import { useCidSearch } from '@/composables/useSearchCid';
@@ -28,12 +27,50 @@ import { applyCpfMask, removeCpfMask } from '@/utils/cpf-mask.utils';
 import { useMedicalCertificates } from '@/composables/useFetchCertificates';
 import SelectCid from './dialog/SelectCid.vue';
 import SearchCollaboratorCpf from './dialog/SearchCollaboratorCpf.vue';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import {
+  CalendarHeader,
+  CalendarHeading,
+  CalendarGrid,
+  CalendarGridHead,
+  CalendarGridBody,
+  CalendarGridRow,
+  CalendarHeadCell,
+  CalendarCell,
+  CalendarCellTrigger,
+} from '../ui/calendar';
+import { CalendarRoot, useDateFormatter } from 'reka-ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { useDateTime } from '@/composables/useDateTime';
+import { createDecade, createYear, toDate } from 'reka-ui/date';
+import dayjs from 'dayjs';
+import type { Collaborator } from '@/interfaces/collaborator';
+import {
+  certificateSchema,
+  type CertificateFormValues,
+} from '@/schema/CertificateSchema';
+import { applyTimeMask } from '@/utils/time-mask.utils';
+
+interface CidOption {
+  code: string;
+  title: string;
+}
 
 const props = defineProps<{
   open: boolean;
-  collaborator?: any;
+  collaborator?: Collaborator;
 }>();
-const emit = defineEmits(['update:open', 'saved']);
+
+const emit = defineEmits<{
+  (e: 'update:open', value: boolean): void;
+  (e: 'saved'): void;
+}>();
 
 const dialogOpen = ref(props.open);
 
@@ -44,6 +81,13 @@ const {
   collaborator: cpfCollaborator,
   searchCollaborator,
 } = useCollaboratorSearch();
+const {
+  issueTime,
+  formatDateToCalendar,
+  parseCalendarDate,
+  setIssueDate,
+  getCurrentDate,
+} = useDateTime();
 
 const {
   createCertificate,
@@ -55,30 +99,12 @@ const {
 const { cidOptions, cidLoading, searchCid, clearCidSearch } = useCidSearch();
 const { fetchCertificates } = useMedicalCertificates();
 
-const schema = toTypedSchema(
-  z.object({
-    collaboratorId: z.string().min(1, 'Colaborador obrigatório'),
-    issueDate: z.string().min(1, 'Data obrigatória'),
-    leaveDays: z.coerce
-      .number()
-      .min(1, 'Mínimo 1 dia')
-      .max(365, 'Máximo 365 dias'),
-    cidCode: z.string().min(1, 'Selecione um CID'),
-    observations: z.string().optional(),
-  }),
-);
+const schema = toTypedSchema(certificateSchema);
 
 watch(
   () => props.open,
   (val) => (dialogOpen.value = val),
 );
-
-function getCurrentDateTime(): string {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-  const localTime = new Date(now.getTime() - offset);
-  return localTime.toISOString().slice(0, 16);
-}
 
 const {
   handleSubmit,
@@ -91,7 +117,7 @@ const {
   validationSchema: schema,
   initialValues: {
     collaboratorId: '',
-    issueDate: getCurrentDateTime(),
+    issueDate: getCurrentDate(),
     leaveDays: 1,
     cidCode: '',
     observations: '',
@@ -110,7 +136,7 @@ watch(cpfCollaborator, (val) => {
 });
 
 const cidSearchTerm = ref('');
-const selectedCid = ref<any>(null);
+const selectedCid = ref<CidOption | null>(null);
 const cidSearchTimeout = ref<number | undefined>(undefined);
 const cpfDisplay = ref('');
 
@@ -151,7 +177,7 @@ watch(cpfSearch, (val) => {
   }
 });
 
-const onSubmit = handleSubmit(async (formValues: any) => {
+const onSubmit = handleSubmit(async (formValues: CertificateFormValues) => {
   clearError();
 
   if (!cpfCollaborator.value) {
@@ -186,15 +212,18 @@ const onSubmit = handleSubmit(async (formValues: any) => {
       dialogOpen.value = false;
       emit('saved');
     },
-    onError: (error) => {
-      if (error.response?.data?.field) {
-        setFieldError(error.response.data.field, error.response.data.message);
+    onError: (error: unknown) => {
+      if ((error as any).response?.data?.field) {
+        setFieldError(
+          (error as any).response.data.field,
+          (error as any).response.data.message,
+        );
       }
     },
   });
 });
 
-function selectCid(option: any) {
+function selectCid(option: CidOption) {
   setFieldValue('cidCode', option.code);
   selectedCid.value = option;
   cidSearchTerm.value = `${option.code} - ${option.title}`;
@@ -245,6 +274,16 @@ function clearCpfInput() {
   setFieldValue('collaboratorId', '');
   setFieldError('collaboratorId', undefined);
 }
+
+const formatter = useDateFormatter('pt-BR');
+
+const formattedIssueDate = computed(() => {
+  if (!values.issueDate) return 'Selecione a data';
+  const [datePart] = values.issueDate.split(' - ');
+  if (!datePart) return 'Selecione a data';
+  const date = dayjs(datePart, 'DD/MM/YYYY', true);
+  return date.isValid() ? date.format('DD/MM/YYYY') : 'Selecione a data';
+});
 </script>
 
 <template>
@@ -273,18 +312,156 @@ function clearCpfInput() {
         </FormField>
 
         <section class="flex flex-col md:flex-row gap-2 items-center">
-          <div class="w-full">
-            <FormField v-slot="{ componentField }" name="issueDate">
+          <div
+            class="flex-1 min-w-0 max-md:w-full max-md:my-2 md:w-32 max-w-full"
+          >
+            <FormField v-slot="{ value, setValue }" name="issueDate">
               <FormItem>
                 <FormLabel>Data de emissão *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="datetime-local"
-                    v-bind="componentField"
-                    :class="{ 'border-red-500': errors.issueDate }"
-                    class="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </FormControl>
+                <Popover>
+                  <PopoverTrigger as-child>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        class="w-full justify-start text-left font-normal"
+                      >
+                        <span>
+                          {{ formattedIssueDate }}
+                        </span>
+                        <CalendarIcon class="ms-auto h-4 w-4" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-auto p-0" align="start">
+                    <CalendarRoot
+                      v-slot="{ date, grid, weekDays }"
+                      :model-value="parseCalendarDate(value ?? '')"
+                      @update:model-value="
+                        (d) =>
+                          setIssueDate(
+                            formatDateToCalendar(d),
+                            issueTime,
+                            setFieldValue,
+                          )
+                      "
+                      class="rounded-md border p-3"
+                    >
+                      <CalendarHeader>
+                        <CalendarHeading
+                          class="flex w-full items-center justify-between gap-2"
+                        >
+                          <Select
+                            :default-value="date.month.toString()"
+                            @update:model-value="
+                              (v) => {
+                                if (!v || !date) return;
+                                if (Number(v) === date.month) return;
+                                setValue(
+                                  formatDateToCalendar(
+                                    date.set({ month: Number(v) }),
+                                  ),
+                                );
+                              }
+                            "
+                          >
+                            <SelectTrigger
+                              aria-label="Selecionar mês"
+                              class="w-54"
+                            >
+                              <SelectValue placeholder="Selecionar mês" />
+                            </SelectTrigger>
+                            <SelectContent class="max-h-[400px]">
+                              <SelectItem
+                                v-for="month in createYear({ dateObj: date })"
+                                :key="month.month"
+                                :value="month.month.toString()"
+                              >
+                                {{
+                                  formatter.custom(toDate(month), {
+                                    month: 'long',
+                                  })
+                                }}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          <Select
+                            :default-value="date ? date.year.toString() : ''"
+                            @update:model-value="
+                              (v) => {
+                                if (!v || !date) return;
+                                if (Number(v) === date.year) return;
+                                setValue(
+                                  formatDateToCalendar(
+                                    date.set({ year: Number(v) }),
+                                  ),
+                                );
+                              }
+                            "
+                          >
+                            <SelectTrigger
+                              aria-label="Selecionar ano"
+                              class="w-[30%]"
+                            >
+                              <SelectValue placeholder="Selecionar ano" />
+                            </SelectTrigger>
+                            <SelectContent class="max-h-[400px]">
+                              <SelectItem
+                                v-for="yearValue in createDecade({
+                                  dateObj: date,
+                                  startIndex: -10,
+                                  endIndex: 10,
+                                })"
+                                :key="yearValue.year"
+                                :value="yearValue.year.toString()"
+                              >
+                                {{ yearValue.year }}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </CalendarHeading>
+                      </CalendarHeader>
+
+                      <div
+                        class="flex flex-col space-y-4 pt-4 sm:flex-row sm:gap-x-4 sm:gap-y-0"
+                      >
+                        <CalendarGrid
+                          v-for="month in grid"
+                          :key="month.value.toString()"
+                        >
+                          <CalendarGridHead>
+                            <CalendarGridRow>
+                              <CalendarHeadCell
+                                v-for="day in weekDays"
+                                :key="day"
+                              >
+                                {{ day }}
+                              </CalendarHeadCell>
+                            </CalendarGridRow>
+                          </CalendarGridHead>
+                          <CalendarGridBody class="grid">
+                            <CalendarGridRow
+                              v-for="(weekDates, index) in month.rows"
+                              :key="`weekDate-${index}`"
+                              class="mt-2 w-full"
+                            >
+                              <CalendarCell
+                                v-for="weekDate in weekDates"
+                                :key="weekDate.toString()"
+                                :date="weekDate"
+                              >
+                                <CalendarCellTrigger
+                                  :day="weekDate"
+                                  :month="month.value"
+                                />
+                              </CalendarCell>
+                            </CalendarGridRow>
+                          </CalendarGridBody>
+                        </CalendarGrid>
+                      </div>
+                    </CalendarRoot>
+                  </PopoverContent>
+                </Popover>
                 <FormDescription>
                   Data e hora da emissão do atestado.
                 </FormDescription>
@@ -292,7 +469,39 @@ function clearCpfInput() {
               </FormItem>
             </FormField>
           </div>
-          <div class="w-full">
+          <div class="min-w-0 max-md:w-full max-md:my-2">
+            <FormField v-slot="{ value }" name="issueTime">
+              <FormItem>
+                <FormLabel>Hora *</FormLabel>
+                <section class="relative md:w-32 max-w-full">
+                  <Input
+                    id="issueTime"
+                    type="text"
+                    v-model="issueTime"
+                    @input="issueTime = applyTimeMask($event.target.value)"
+                    @change="
+                      value &&
+                      setIssueDate(
+                        value.split(' - ')[0],
+                        issueTime,
+                        setFieldValue,
+                      )
+                    "
+                    step="1"
+                    placeholder="hh:mm:ss"
+                    maxlength="8"
+                  />
+                  <ClockIcon
+                    class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
+                  />
+                </section>
+                <FormDescription>
+                  <span class="invisible max-lg:hidden">hora</span>
+                </FormDescription>
+              </FormItem>
+            </FormField>
+          </div>
+          <div class="flex-1 min-w-0 max-md:w-full max-md:my-2">
             <FormField v-slot="{ componentField }" name="leaveDays">
               <FormItem>
                 <FormLabel>Dias de afastamento *</FormLabel>
