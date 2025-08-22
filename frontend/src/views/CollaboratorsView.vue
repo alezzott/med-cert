@@ -37,6 +37,7 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const pageSizeOptions = [5, 10, 20, 50];
 const sorting = ref<SortingState>([]);
+const statusValue = ref('ALL');
 
 const paginatedCollaborator = computed(() => {
   if (collaborator.value?.length) {
@@ -118,6 +119,19 @@ function handleSearchInput() {
   } else {
     fetchCollaborators({ page: 1, limit: pageSize.value });
   }
+}
+
+function handleChangeStatus(status: CollaboratorStatus | '') {
+  statusValue.value = status;
+  currentPage.value = 1;
+  fetchCollaborators({
+    page: 1,
+    limit: pageSize.value,
+    status:
+      statusValue.value !== ''
+        ? (statusValue.value as CollaboratorStatus)
+        : undefined,
+  });
 }
 
 function handleSortingChange(updater: SortingState | Updater<SortingState>) {
@@ -270,10 +284,12 @@ onMounted(() => {
       <section v-else>
         <CollaboratorFilter
           v-model:searchValue="searchValue"
+          v-model:statusValue="statusValue"
           :pageSize="pageSize"
           :pageSizeOptions="pageSizeOptions"
           :onSearch="handleSearchInput"
           :onChangePageSize="changePageSize"
+          :onChangeStatus="handleChangeStatus"
           :onClearSearch="
             () => {
               searchValue = '';

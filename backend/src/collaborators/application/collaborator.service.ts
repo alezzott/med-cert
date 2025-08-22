@@ -43,11 +43,16 @@ export class CollaboratorService {
   async findAllPaginated(
     page: number,
     limit: number,
+    status?: string,
   ): Promise<{ collaborators: Collaborator[]; total: number }> {
     this.logger.log(
       `Listando colaboradores paginados - página: ${page}, limite: ${limit}`,
     );
-    return await this.collaboratorRepository.findAllPaginated(page, limit);
+    return await this.collaboratorRepository.findAllPaginated(
+      page,
+      limit,
+      status,
+    );
   }
 
   async updateStatus(id: string, status: string): Promise<Collaborator | null> {

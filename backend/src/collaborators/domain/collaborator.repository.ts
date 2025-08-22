@@ -8,6 +8,7 @@ export interface CollaboratorRepository {
   findAllPaginated(
     page: number,
     limit: number,
+    status?: string,
   ): Promise<{ collaborators: Collaborator[]; total: number }>;
   updateStatus(id: string, status: string): Promise<Collaborator | null>;
   findByCpf(cpf?: string, name?: string): Promise<Collaborator[]>;

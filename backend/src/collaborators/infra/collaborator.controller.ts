@@ -87,17 +87,19 @@ export class CollaboratorController {
   async findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
+    @Query('status') status?: string,
   ): Promise<{
     data: CollaboratorResponseDto[];
     page: number;
     limit?: number;
     total?: number;
+    status?: string;
   }> {
     this.logger.log(
       `Admin solicitou listagem de colaboradores - página: ${page}, limite: ${limit}`,
     );
     const { collaborators, total } =
-      await this.useCase.listCollaboratorsPaginated(page, limit);
+      await this.useCase.listCollaboratorsPaginated(page, limit, status);
     return {
       data: collaborators.map((c) => ({
         id: c.id,

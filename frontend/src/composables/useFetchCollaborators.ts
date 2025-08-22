@@ -1,3 +1,4 @@
+import type { CollaboratorStatus } from '@/enums/status.enums';
 import type { Collaborator } from '@/interfaces/collaborator';
 import axios from 'axios';
 import { ref } from 'vue';
@@ -14,6 +15,7 @@ export function useCollaborators() {
   async function fetchCollaborators(params?: {
     page?: number;
     limit?: number;
+    status?: CollaboratorStatus;
   }) {
     loading.value = true;
     error.value = '';

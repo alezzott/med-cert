@@ -43,8 +43,9 @@ export class CollaboratorUseCase {
   async listCollaboratorsPaginated(
     page: number,
     limit: number,
+    status?: string,
   ): Promise<{ collaborators: Collaborator[]; total: number }> {
-    return await this.collaboratorService.findAllPaginated(page, limit);
+    return await this.collaboratorService.findAllPaginated(page, limit, status);
   }
 
   async updateCollaboratorStatus(

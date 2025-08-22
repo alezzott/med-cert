@@ -33,6 +33,32 @@
       </Select>
     </div>
 
+    <div class="flex items-center gap-2">
+      <label
+        for="statusSelect"
+        class="text-sm text-muted-foreground whitespace-nowrap"
+      >
+        Status:
+      </label>
+      <Select
+        id="statusSelect"
+        :model-value="statusValue"
+        @update:model-value="
+          (value) => onChangeStatus(value as CollaboratorStatus)
+        "
+        aria-label="Filtrar por status"
+      >
+        <SelectTrigger class="w-24">
+          <SelectValue placeholder="Selecione o status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="ALL">Todos</SelectItem>
+          <SelectItem value="ACTIVE">Ativo</SelectItem>
+          <SelectItem value="INACTIVE">Inativo</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
     <div class="flex items-center gap-2 w-full max-md:max-w-md">
       <input
         id="searchInput"
@@ -79,14 +105,17 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-vue-next';
+import type { CollaboratorStatus } from '@/enums/status.enums';
 
 defineProps<{
   searchValue: string;
   pageSize: number;
   pageSizeOptions: number[];
+  statusValue: string;
   onSearch: () => void;
   onChangePageSize: (size: number) => void;
   onClearSearch: () => void;
+  onChangeStatus: (status: '' | CollaboratorStatus) => void;
 }>();
 
 function onInput(event: Event) {
@@ -98,5 +127,6 @@ function onInput(event: Event) {
 
 const emit = defineEmits<{
   (e: 'update:searchValue', value: string): void;
+  (e: 'update:statusValue', value: string): void;
 }>();
 </script>

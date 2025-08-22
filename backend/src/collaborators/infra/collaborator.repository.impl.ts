@@ -60,15 +60,22 @@ export class CollaboratorRepositoryImpl implements CollaboratorRepository {
   async findAllPaginated(
     page: number,
     limit: number,
+    status?: string,
   ): Promise<{ collaborators: Collaborator[]; total: number }> {
     const skip = (page - 1) * limit;
+    const query: Record<string, any> = {};
+
+    if (status && status !== 'ALL') {
+      query.status = status;
+    }
+
     const docs = await this.collaboratorModel
-      .find()
+      .find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .exec();
-    const total = await this.collaboratorModel.countDocuments().exec();
+    const total = await this.collaboratorModel.countDocuments(query).exec();
     return {
       collaborators: docs.map(
         (doc) => this.toCollaborator(doc) as Collaborator,
