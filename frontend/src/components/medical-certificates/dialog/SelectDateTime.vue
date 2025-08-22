@@ -217,28 +217,15 @@ const formattedIssueDate = computed(() => {
       </FormField>
     </div>
     <div class="min-w-0 max-md:w-full max-md:my-2">
-      <FormField v-slot="{ value }" name="issueTime">
+      <FormField v-slot="{ value, setValue }" name="issueTime">
         <FormItem>
           <FormLabel>Hora *</FormLabel>
           <section class="relative md:w-32 max-w-full">
             <Input
               id="issueTime"
               type="text"
-              :model-value="props.issueTime"
-              @input="
-                props.setFieldValue(
-                  'issueTime',
-                  applyTimeMask($event.target.value),
-                )
-              "
-              @change="
-                value &&
-                props.setIssueDate(
-                  value.split(' - ')[0],
-                  props.issueTime,
-                  props.setFieldValue,
-                )
-              "
+              :model-value="value"
+              @input="setValue(applyTimeMask($event.target.value))"
               step="1"
               placeholder="hh:mm:ss"
               maxlength="8"

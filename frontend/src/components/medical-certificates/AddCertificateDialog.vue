@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
@@ -26,10 +26,8 @@ import { applyCpfMask, removeCpfMask } from '@/utils/cpf-mask.utils';
 import { useMedicalCertificates } from '@/composables/useFetchCertificates';
 import SelectCid from './dialog/SelectCid.vue';
 import SearchCollaboratorCpf from './dialog/SearchCollaboratorCpf.vue';
-import { useDateFormatter } from 'reka-ui';
 
 import { useDateTime } from '@/composables/useDateTime';
-import dayjs from 'dayjs';
 import type { Collaborator } from '@/interfaces/collaborator';
 import {
   certificateSchema,
@@ -254,16 +252,6 @@ function clearCpfInput() {
   setFieldValue('collaboratorId', '');
   setFieldError('collaboratorId', undefined);
 }
-
-const formatter = useDateFormatter('pt-BR');
-
-const formattedIssueDate = computed(() => {
-  if (!values.issueDate) return 'Selecione a data';
-  const [datePart] = values.issueDate.split(' - ');
-  if (!datePart) return 'Selecione a data';
-  const date = dayjs(datePart, 'DD/MM/YYYY', true);
-  return date.isValid() ? date.format('DD/MM/YYYY') : 'Selecione a data';
-});
 </script>
 
 <template>
