@@ -41,12 +41,22 @@ export class CreateMedicalCertificateDto {
 
   @ApiProperty({
     description:
-      'CID (Código Internacional de Doenças) relacionado ao atestado',
-    example: 'Z76.3',
+      'Lista de CIDs (Código Internacional de Doenças) relacionado ao atestado',
+    example: [{ cidCode: 'Z76.3', cidDesc: 'Consulta médica de rotina' }],
   })
   @IsNotEmpty({ message: 'CID é obrigatório' })
   @IsString()
   cidCode: string;
+
+  @ApiProperty({
+    description:
+      'Descrição do CID (opcional, se não enviado será buscada automaticamente)',
+    example: 'Transtorno de ansiedade social',
+  })
+  @IsNotEmpty({ message: 'CID é obrigatório' })
+  @IsString()
+  cidDesc: string;
+
   @ApiProperty({
     description: 'Observações adicionais sobre o atestado',
     example: 'Paciente deve manter repouso absoluto',

@@ -9,6 +9,7 @@ export interface CreateCertificatePayload {
   issueDate: string;
   leaveDays: number;
   cidCode: string;
+  cidDesc: string;
   observations?: string;
 }
 
@@ -152,6 +153,7 @@ export function useCreateCertificate() {
       issueDate: localDate,
       leaveDays: Number(payload.leaveDays),
       cidCode: payload.cidCode.trim().toUpperCase(),
+      cidDesc: payload.cidDesc.trim(),
       observations: payload.observations?.trim() || '',
     };
   };
@@ -166,6 +168,7 @@ export function useCreateCertificate() {
       payload.issueDate &&
       payload.leaveDays &&
       payload.cidCode &&
+      payload.cidDesc &&
       !isLoading.value
     );
   };

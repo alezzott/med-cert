@@ -98,6 +98,7 @@ const {
     issueDate: getCurrentDate(),
     leaveDays: 1,
     cidCode: '',
+    cidDesc: '',
     observations: '',
   },
 });
@@ -125,6 +126,7 @@ function handleCidInput(e: Event) {
   if (selectedCid.value && !value.includes(selectedCid.value.code)) {
     selectedCid.value = null;
     setFieldValue('cidCode', '');
+    setFieldValue('cidDesc', '');
   }
 
   if (!value || value.length < 2) {
@@ -176,6 +178,7 @@ const onSubmit = handleSubmit(async (formValues: CertificateFormValues) => {
     issueDate: formValues.issueDate,
     leaveDays: formValues.leaveDays,
     cidCode: formValues.cidCode,
+    cidDesc: selectedCid.value?.title,
     observations: formValues.observations,
   };
 
@@ -203,12 +206,14 @@ const onSubmit = handleSubmit(async (formValues: CertificateFormValues) => {
 
 function selectCid(option: CidOption) {
   setFieldValue('cidCode', option.code);
+  setFieldValue('cidDesc', option.title);
   selectedCid.value = option;
   cidSearchTerm.value = `${option.code} - ${option.title}`;
   clearCidSearch();
 
   if (errors.value.cidCode) {
     setFieldError('cidCode', undefined);
+    setFieldError('cidDesc', undefined);
   }
 
   if (cidSearchTimeout.value) {

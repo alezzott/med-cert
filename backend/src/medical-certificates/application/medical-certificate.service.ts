@@ -7,6 +7,7 @@ import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.d
 import { CreateMedicalCertificateDto } from '../dto/medical-certificate-create.dto';
 import { MedicalCertificate } from '../domain/medical-certificate.entity';
 import { MedicalCertificateResponseDto } from '../dto/medical-certificate-response.dto';
+import { OmsService } from 'src/cid/application/oms.service';
 
 interface PaginationOptions {
   page: number;
@@ -22,6 +23,10 @@ interface FilterParams {
   name?: string;
 }
 
+type CertificateEntityDto = CreateMedicalCertificateDto & {
+  cid: { cidCode: string; cidDesc: string }[];
+};
+
 @Injectable()
 export class MedicalCertificateService {
   private readonly DEFAULT_PAGE = 1;
@@ -34,6 +39,7 @@ export class MedicalCertificateService {
     @Inject('Logger') private readonly logger: LoggerService,
     @InjectModel('Collaborator')
     private readonly collaboratorModel: Model<Collaborator>,
+    private readonly omsService: OmsService,
   ) {}
 
   async findAll(filter: MedicalCertificateFilterDto) {
@@ -55,8 +61,30 @@ export class MedicalCertificateService {
       .lean();
     const name = collaborator?.name || '';
 
-    const certificate = this.createCertificateEntity(dto, name);
+    const cidDesc = await this.resolveCidDesc(dto);
+
+    const certificateDto = {
+      ...dto,
+      cid: [
+        {
+          cidCode: dto.cidCode,
+          cidDesc,
+        },
+      ],
+    };
+
+    const certificate = this.createCertificateEntity(certificateDto, name);
     return this.repository.create(certificate);
+  }
+
+  private async resolveCidDesc(
+    dto: CreateMedicalCertificateDto,
+  ): Promise<string> {
+    if (dto.cidDesc) return dto.cidDesc;
+
+    const cidResults = await this.omsService.searchCid(dto.cidCode);
+    const result = cidResults?.find((item) => item.code === dto.cidCode);
+    return result?.description || 'Descrição não encontrada';
   }
 
   private logFindAllOperation(): void {
@@ -94,7 +122,7 @@ export class MedicalCertificateService {
   }
 
   private createCertificateEntity(
-    dto: CreateMedicalCertificateDto,
+    dto: CertificateEntityDto,
     name: string,
   ): MedicalCertificate {
     return new MedicalCertificate(
@@ -102,7 +130,7 @@ export class MedicalCertificateService {
       dto.collaboratorId,
       new Date(dto.issueDate),
       dto.leaveDays,
-      dto.cidCode,
+      dto.cid,
       name,
       dto.observations,
     );

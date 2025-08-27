@@ -132,7 +132,7 @@ export class MedicalCertificateRepositoryImpl
       id: certificate.id,
       collaboratorId: certificate.collaboratorId,
       name: collaborator?.name || '',
-      cidCode: certificate.cidCode,
+      cid: certificate.cid,
       issueDate: formatDateTime(new Date(certificate.issueDate)),
       leaveDays: certificate.leaveDays,
       observations: certificate.observations,
@@ -146,7 +146,7 @@ export class MedicalCertificateRepositoryImpl
       collaboratorId: certificate.collaboratorId,
       issueDate: certificate.issueDate,
       leaveDays: certificate.leaveDays,
-      cidCode: certificate.cidCode,
+      cid: certificate.cid,
       name: certificate.name,
       observations: certificate.observations,
     });

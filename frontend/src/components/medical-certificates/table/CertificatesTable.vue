@@ -75,7 +75,12 @@
             <div class="grid grid-cols-1 gap-2 text-sm">
               <div class="flex justify-between">
                 <strong>CID:</strong>
-                <span>{{ row.getValue('cidCode') }}</span>
+                <span
+                  v-for="cid in row.getValue('cid') as CertificateCid[]"
+                  :key="cid.cidCode"
+                >
+                  {{ cid.cidCode }}
+                </span>
               </div>
               <div class="flex justify-between">
                 <strong>Data de Emissão:</strong>
@@ -116,6 +121,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { MedicalCertificate } from '@/composables/useFetchCertificates';
+
+type CertificateCid = { cidCode: string; [key: string]: any };
 import {
   FlexRender,
   type Table as TanTable,

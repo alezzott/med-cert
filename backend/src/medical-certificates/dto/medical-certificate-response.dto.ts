@@ -1,5 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+class CidItem {
+  @ApiProperty({ description: 'Código CID', example: 'Z76.3' })
+  cidCode: string;
+
+  @ApiProperty({
+    description: 'Descrição do CID',
+    example: 'Consulta médica de rotina',
+  })
+  cidDesc: string;
+}
+
 export class MedicalCertificateResponseDto {
   @ApiProperty({
     description: 'ID único do atestado médico',
@@ -20,10 +31,11 @@ export class MedicalCertificateResponseDto {
   name: string;
 
   @ApiProperty({
-    description: 'CID (Código Internacional de Doenças)',
-    example: 'Z76.3',
+    description: 'Lista de CIDs',
+    type: [CidItem],
+    example: [{ cidCode: 'Z76.3', cidDesc: 'Consulta médica de rotina' }],
   })
-  cidCode: string;
+  cid: CidItem[];
 
   @ApiProperty({
     description: 'Data de emissão do atestado',
