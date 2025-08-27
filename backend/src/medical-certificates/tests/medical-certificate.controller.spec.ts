@@ -46,6 +46,7 @@ describe('MedicalCertificateController (integração)', () => {
       leaveDays: 5,
       cidCode: 'A00',
       observations: 'Paciente: Maria, Médico: Dr. João',
+      cidDesc: 'Descrição CID',
     };
     useCase.createCertificate.mockResolvedValue({
       id: '1',
@@ -53,7 +54,7 @@ describe('MedicalCertificateController (integração)', () => {
       collaboratorId: dto.collaboratorId,
       issueDate: formatDateTime(new Date(dto.issueDate)),
       leaveDays: dto.leaveDays,
-      cidCode: dto.cidCode,
+      cid: [{ cidCode: dto.cidCode, cidDesc: dto.cidDesc }],
       observations: dto.observations,
     });
 
@@ -64,7 +65,7 @@ describe('MedicalCertificateController (integração)', () => {
       name: 'Nome do Colaborador',
       issueDate: formatDateTime(new Date(dto.issueDate)),
       leaveDays: dto.leaveDays,
-      cidCode: dto.cidCode,
+      cid: [{ cidCode: dto.cidCode, cidDesc: dto.cidDesc }],
       observations: dto.observations,
     });
     expect(useCase.createCertificate).toHaveBeenCalledWith(dto);
@@ -87,6 +88,7 @@ describe('MedicalCertificateController (integração)', () => {
           leaveDays: 5,
           cidCode: 'A00',
           observations: 'Paciente: Maria, Médico: Dr. João',
+          cid: [{ cidCode: 'A00', cidDesc: 'Descrição CID' }],
         },
       ],
       total: 1,
