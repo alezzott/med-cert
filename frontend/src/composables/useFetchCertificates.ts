@@ -19,6 +19,7 @@ export function useMedicalCertificates() {
     page = 1,
     limit = 10,
     name = '',
+    sort = '',
   } = {}) => {
     loading.value = true;
     error.value = '';
@@ -27,8 +28,13 @@ export function useMedicalCertificates() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (name.trim()) {
+
+      if (name.trim() && sort) {
         params.append('name', name.trim());
+      }
+
+      if (sort) {
+        params.append('sort', sort);
       }
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/medical-certificates?${params}`,

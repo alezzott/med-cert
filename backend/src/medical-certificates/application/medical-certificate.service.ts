@@ -7,7 +7,7 @@ import { MedicalCertificateFilterDto } from '../dto/medical-certificate-filter.d
 import { CreateMedicalCertificateDto } from '../dto/medical-certificate-create.dto';
 import { MedicalCertificate } from '../domain/medical-certificate.entity';
 import { MedicalCertificateResponseDto } from '../dto/medical-certificate-response.dto';
-import { OmsService } from 'src/cid/application/oms.service';
+import { OmsService } from '../../cid/application/oms.service';
 
 interface PaginationOptions {
   page: number;

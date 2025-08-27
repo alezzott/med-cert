@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, h, onMounted, ref, watch } from 'vue';
 import {
   getCoreRowModel,
-  getSortedRowModel,
   useVueTable,
   type SortingState,
   type Updater,
@@ -16,6 +15,7 @@ import MedialCertificationFilter from '@/components/medical-certificates/table/M
 import CertificatesTable from '@/components/medical-certificates/table/CertificatesTable.vue';
 import PaginationCertificateTable from '@/components/medical-certificates/table/PaginationCertificateTable.vue';
 import type { Collaborator } from '@/interfaces/collaborator';
+import CidInfoTooltip from '@/components/medical-certificates/table/CidInfoTooltip.vue';
 
 const { certificates, loading, error, total, fetchCertificates } =
   useMedicalCertificates();
@@ -26,11 +26,16 @@ const pageSizeOptions = [5, 10, 20];
 const searchInput = ref('');
 const sorting = ref<SortingState>([]);
 
-watch([currentPage, pageSize], () => {
+watch([currentPage, pageSize, sorting], () => {
+  let sortParam = '';
+  if (sorting.value.length && sorting.value[0].id === 'issueDate') {
+    sortParam = sorting.value[0].desc ? 'desc' : 'asc';
+  }
   fetchCertificates({
     page: currentPage.value,
     limit: pageSize.value,
     name: searchInput.value,
+    sort: sortParam,
   });
 });
 
@@ -80,10 +85,21 @@ const columns = [
     enableSorting: false,
   },
   {
-    accessorKey: 'cidCode',
+    id: 'cid',
     header: 'CID',
-    cell: ({ row }: any) => row.getValue('cidCode'),
     enableSorting: false,
+    accessorFn: (row: any) => row.cid ?? [],
+    cell: ({ getValue }: any) => {
+      const cidArray = getValue() as { cidCode: string; cidDesc: string }[];
+      if (!cidArray || cidArray.length === 0) return h('span', '-');
+      return h(
+        'div',
+        {},
+        cidArray.map((c) =>
+          h(CidInfoTooltip, { cidCode: c.cidCode, cidDesc: c.cidDesc }),
+        ),
+      );
+    },
   },
   {
     accessorKey: 'issueDate',
@@ -111,24 +127,34 @@ const columns = [
   },
 ];
 
+const sortedCertificates = computed(() => {
+  if (sorting.value.length && sorting.value[0].id === 'leaveDays') {
+    const direction = sorting.value[0].desc ? -1 : 1;
+    return [...certificates.value].sort((a, b) => {
+      return (a.leaveDays - b.leaveDays) * direction;
+    });
+  }
+  return certificates.value;
+});
+
 function handleSortingChange(updater: SortingState | Updater<SortingState>) {
   const newSorting =
     typeof updater === 'function' ? updater(sorting.value) : updater;
   sorting.value = newSorting;
+  currentPage.value = 1;
 }
 
 const table = useVueTable({
-  data: certificates,
+  data: sortedCertificates,
   columns,
   getCoreRowModel: getCoreRowModel(),
-  getSortedRowModel: getSortedRowModel(),
   state: {
     get sorting() {
       return sorting.value;
     },
   },
   onSortingChange: handleSortingChange,
-  manualSorting: false,
+  manualSorting: true,
 });
 onMounted(() => {
   fetchCertificates({
