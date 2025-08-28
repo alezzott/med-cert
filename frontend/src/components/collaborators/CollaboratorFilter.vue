@@ -1,7 +1,7 @@
 <template>
   <form
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-4"
-    @submit.prevent="onSearch"
+    @submit.prevent="handleSearchInput"
     aria-label="Filtros de colaboradores"
   >
     <div class="flex items-center gap-2">
@@ -14,7 +14,7 @@
       <Select
         id="pageSize"
         :model-value="pageSize.toString()"
-        @update:model-value="(value) => onChangePageSize(Number(value))"
+        @update:model-value="(value) => changePageSize(Number(value))"
         aria-label="Selecionar quantidade de itens por página"
       >
         <SelectTrigger class="w-20">
@@ -44,7 +44,7 @@
         id="statusSelect"
         :model-value="statusValue"
         @update:model-value="
-          (value) => onChangeStatus(value as CollaboratorStatus)
+          (value) => handleChangeStatus(value as CollaboratorStatus)
         "
         aria-label="Filtrar por status"
       >
@@ -52,9 +52,13 @@
           <SelectValue placeholder="Selecione o status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="ALL">Todos</SelectItem>
-          <SelectItem value="ACTIVE">Ativo</SelectItem>
-          <SelectItem value="INACTIVE">Inativo</SelectItem>
+          <SelectItem
+            v-for="option in statusOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>
@@ -75,15 +79,15 @@
         variant="outline"
         aria-label="Limpar busca"
         @click="
-          $emit('update:searchValue', '');
-          onClearSearch();
+          emit('update:searchValue', '');
+          emit('fetchCollaborators');
         "
         size="icon"
       >
         <X />
       </Button>
       <Button
-        title="limpar botão"
+        title="Buscar"
         type="submit"
         class="whitespace-nowrap"
         aria-label="Buscar colaboradores"
@@ -105,18 +109,43 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-vue-next';
-import type { CollaboratorStatus } from '@/enums/status.enums';
+import { CollaboratorStatus, translateStatus } from '@/enums/status.enums';
 
-defineProps<{
+const props = defineProps<{
   searchValue: string;
+  statusValue: string;
   pageSize: number;
   pageSizeOptions: number[];
-  statusValue: string;
-  onSearch: () => void;
-  onChangePageSize: (size: number) => void;
-  onClearSearch: () => void;
-  onChangeStatus: (status: '' | CollaboratorStatus) => void;
 }>();
+
+const emit = defineEmits<{
+  (e: 'update:pageSize', value: number): void;
+  (e: 'changePage', value: number): void;
+  (e: 'fetchCollaborators'): void;
+  (e: 'searchCollaborator', value: string): void;
+  (e: 'update:searchValue', value: string): void;
+  (e: 'update:statusValue', value: string): void;
+}>();
+
+function changePageSize(newSize: number) {
+  emit('update:pageSize', newSize);
+  emit('changePage', 1);
+}
+
+function handleSearchInput() {
+  emit('changePage', 1);
+  if (props.searchValue && props.searchValue.trim()) {
+    emit('searchCollaborator', props.searchValue);
+  } else {
+    emit('fetchCollaborators');
+  }
+}
+
+function handleChangeStatus(status: CollaboratorStatus | '') {
+  emit('update:statusValue', status || 'ALL');
+  emit('changePage', 1);
+  emit('fetchCollaborators');
+}
 
 function onInput(event: Event) {
   const target = event.target as HTMLInputElement | null;
@@ -125,8 +154,11 @@ function onInput(event: Event) {
   }
 }
 
-const emit = defineEmits<{
-  (e: 'update:searchValue', value: string): void;
-  (e: 'update:statusValue', value: string): void;
-}>();
+const statusOptions = [
+  { value: 'ALL', label: 'Todos' },
+  ...Object.values(CollaboratorStatus).map((status) => ({
+    value: status,
+    label: translateStatus(status),
+  })),
+];
 </script>

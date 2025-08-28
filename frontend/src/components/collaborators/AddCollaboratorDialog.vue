@@ -11,12 +11,17 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
-import { parseDate, type DateValue } from '@internationalized/date';
 import { useCreateCollaborator } from '@/composables/useCreateCollaborator';
 import { removeCpfMask } from '@/utils/cpf-mask.utils';
 import CollaboratorsFormFields from './dialog/CollaboratorsFormFields.vue';
 import { CollaboratorSchema } from '@/schema/CollaboratorSchema';
 import { Loader2 } from 'lucide-vue-next';
+import { useCollaboratorsStore } from '@/stores/collaborator.store';
+import {
+  stringToCalendarDate,
+  calendarDateToString,
+  formatDateForDisplay,
+} from '@/utils/date-calendar.utils';
 
 type CollaboratorForm = {
   name: string;
@@ -28,6 +33,7 @@ type CollaboratorForm = {
 const openDialog = ref(false);
 const saving = ref(false);
 const error = ref('');
+const store = useCollaboratorsStore();
 const { createCollaborator, error: apiError } = useCreateCollaborator();
 
 const { resetForm, setValues } = useForm<CollaboratorForm>({
@@ -70,41 +76,13 @@ const onSubmit = async (formValues: CollaboratorForm) => {
     });
     openDialog.value = false;
     emit('saved');
+    store.cache = {};
+    await store.fetchCollaborators();
   } catch (e) {
     error.value = apiError.value || 'Erro ao salvar colaborador';
     return false;
   } finally {
     saving.value = false;
-  }
-};
-
-const stringToCalendarDate = (dateString: string) => {
-  if (!dateString || !dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return undefined;
-  }
-  try {
-    return parseDate(dateString);
-  } catch {
-    return undefined;
-  }
-};
-
-const calendarDateToString = (date: DateValue | undefined) => {
-  if (!date || typeof date.toString !== 'function') {
-    return '';
-  }
-  return date.toString();
-};
-
-const formatDateForDisplay = (dateString: string) => {
-  if (!dateString) return 'Selecione a data';
-  try {
-    const date = parseDate(dateString);
-    return new Date(date.year, date.month - 1, date.day).toLocaleDateString(
-      'pt-BR',
-    );
-  } catch {
-    return 'Selecione a data';
   }
 };
 </script>

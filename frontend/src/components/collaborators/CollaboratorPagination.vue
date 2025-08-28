@@ -8,6 +8,7 @@
         @click="goToFirstPage"
         class="px-2"
         aria-label="Primeira página"
+        title="Primeira página"
       >
         <ChevronsLeft class="h-4 w-4" />
       </Button>
@@ -18,6 +19,7 @@
         @click="goToPrevPage"
         class="px-2"
         aria-label="Página anterior"
+        title="Página anterior"
       >
         <ChevronLeft class="h-4 w-4" />
       </Button>
@@ -39,6 +41,7 @@
         :disabled="!hasNextPage"
         class="px-2"
         aria-label="Próxima página"
+        title="Próxima página"
       >
         <ChevronRight class="h-4 w-4" />
       </Button>
@@ -49,6 +52,7 @@
         :disabled="!hasNextPage"
         class="px-2"
         aria-label="Última página"
+        title="Última página"
       >
         <ChevronsRight class="h-4 w-4" />
       </Button>
@@ -70,13 +74,35 @@ import {
   ChevronsRight,
 } from 'lucide-vue-next';
 
-defineProps<{
+const props = defineProps<{
   currentPage: number;
   hasNextPage: boolean;
   total: number;
-  goToFirstPage: () => void;
-  goToPrevPage: () => void;
-  goToNextPage: () => void;
-  goToLastPage: () => void;
+  pageSize: number;
 }>();
+
+const emit = defineEmits<{
+  (e: 'changePage', page: number): void;
+}>();
+
+function goToPage(page: number) {
+  if (page >= 1) emit('changePage', page);
+}
+
+function goToFirstPage() {
+  goToPage(1);
+}
+
+function goToNextPage() {
+  if (props.hasNextPage) goToPage(props.currentPage + 1);
+}
+
+function goToPrevPage() {
+  if (props.currentPage > 1) goToPage(props.currentPage - 1);
+}
+
+function goToLastPage() {
+  const lastPage = Math.max(1, Math.ceil(props.total / props.pageSize));
+  goToPage(lastPage);
+}
 </script>
