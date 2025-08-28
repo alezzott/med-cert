@@ -8,7 +8,13 @@
             v-for="headerGroup in table.getHeaderGroups()"
             :key="headerGroup.id"
           >
-            <TableHead v-for="header in headerGroup.headers" :key="header.id">
+            <TableHead
+              v-for="header in headerGroup.headers"
+              :key="header.id"
+              :style="{
+                width: header.getSize() ? `${header.getSize()}px` : undefined,
+              }"
+            >
               <div class="flex items-center justify-between">
                 <FlexRender
                   v-if="!header.isPlaceholder"
@@ -16,7 +22,10 @@
                   :props="header.getContext()"
                 />
                 <SortButtonItem
-                  v-if="header.column.getCanSort?.()"
+                  v-if="
+                    header.column.getCanSort?.() &&
+                    table.getRowModel().rows?.length
+                  "
                   :column="header.column"
                 />
               </div>
@@ -31,10 +40,35 @@
               :data-state="row.getIsSelected() && 'selected'"
             >
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                <FlexRender
-                  :render="cell.column.columnDef.cell"
-                  :props="cell.getContext()"
-                />
+                <template v-if="cell.column.id === 'observations'">
+                  <template v-if="row.getValue('observations')">
+                    <article class="flex flex-row gap-4 items-center">
+                      <h1>
+                        {{
+                          (row.getValue('observations') as string).slice(
+                            0,
+                            100,
+                          )
+                        }}...
+                      </h1>
+                      <Button
+                        variant="link"
+                        @click="openDialog(row.getValue('observations'))"
+                      >
+                        Ver mais
+                      </Button>
+                    </article>
+                  </template>
+                  <template v-else>
+                    <span>{{ row.getValue('observations') || '-' }}</span>
+                  </template>
+                </template>
+                <template v-else>
+                  <FlexRender
+                    :render="cell.column.columnDef.cell"
+                    :props="cell.getContext()"
+                  />
+                </template>
               </TableCell>
             </TableRow>
           </template>
@@ -107,11 +141,17 @@
         </div>
       </template>
     </div>
+    <ObservationDetailDialog
+      v-model:open="dialogOpen"
+      :text="dialogText"
+      @close="closeDialog"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import SortButtonItem from '@/components/collaborators/table/SortButtonItem.vue';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -130,6 +170,19 @@ import {
   type SortingState,
   type Updater,
 } from '@tanstack/vue-table';
+import { ref } from 'vue';
+import ObservationDetailDialog from '../dialog/ObservationDetailDialog.vue';
+
+const dialogOpen = ref(false);
+const dialogText = ref('');
+
+function openDialog(text: string) {
+  dialogText.value = text;
+  dialogOpen.value = true;
+}
+function closeDialog() {
+  dialogOpen.value = false;
+}
 
 defineProps<{
   table: TanTable<MedicalCertificate>;
