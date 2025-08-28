@@ -1,6 +1,6 @@
 <template>
   <div :class="isMobile ? 'md:hidden' : 'hidden md:block'">
-    <Table>
+    <Table class="bg-white">
       <TableHeader>
         <TableRow
           v-for="headerGroup in table.getHeaderGroups()"
