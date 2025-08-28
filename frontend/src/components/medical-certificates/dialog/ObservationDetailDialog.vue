@@ -5,7 +5,7 @@
         <DialogClose @click="emitClose" />
       </DialogHeader>
       <DialogDescription>
-        {{ text }}
+        <span v-html="text.replace(/\n/g, '<br>')" />
       </DialogDescription>
     </DialogContent>
   </Dialog>

@@ -326,6 +326,7 @@ function clearCpfInput() {
                 :class="{ 'border-red-500': errors.observations }"
                 rows="3"
                 placeholder="Observações adicionais sobre o atestado..."
+                :value="values.observations"
               />
             </FormControl>
             <FormDescription>
