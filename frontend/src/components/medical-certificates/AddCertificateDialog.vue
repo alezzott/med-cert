@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import FormDescription from '@/components/ui/form/FormDescription.vue';
@@ -23,7 +25,6 @@ import { useCollaboratorSearch } from '@/composables/useSearchCollaborator';
 import { useCreateCertificate } from '@/composables/useCreateCertificate';
 import { useCidSearch } from '@/composables/useSearchCid';
 import { applyCpfMask, removeCpfMask } from '@/utils/cpf-mask.utils';
-import { useMedicalCertificates } from '@/composables/useFetchCertificates';
 import SelectCid from './dialog/SelectCid.vue';
 import SearchCollaboratorCpf from './dialog/SearchCollaboratorCpf.vue';
 
@@ -34,6 +35,7 @@ import {
   type CertificateFormValues,
 } from '@/schema/CertificateSchema';
 import SelectDateTime from './dialog/SelectDateTime.vue';
+import { useCertificatesStore } from '@/stores/certificates.store';
 
 interface CidOption {
   code: string;
@@ -59,6 +61,7 @@ const {
   collaborator: cpfCollaborator,
   searchCollaborator,
 } = useCollaboratorSearch();
+
 const {
   issueTime,
   formatDateToCalendar,
@@ -75,7 +78,7 @@ const {
 } = useCreateCertificate();
 
 const { cidOptions, cidLoading, searchCid, clearCidSearch } = useCidSearch();
-const { fetchCertificates } = useMedicalCertificates();
+const store = useCertificatesStore();
 
 const schema = toTypedSchema(certificateSchema);
 
@@ -182,26 +185,28 @@ const onSubmit = handleSubmit(async (formValues: CertificateFormValues) => {
     observations: formValues.observations,
   };
 
-  await createCertificate(payload, {
-    onSuccess: async () => {
-      await fetchCertificates();
-      resetForm();
-      cpfSearch.value = '';
-      cidSearchTerm.value = '';
-      selectedCid.value = null;
-      clearCidSearch();
-      dialogOpen.value = false;
-      emit('saved');
-    },
-    onError: (error: unknown) => {
-      if ((error as any).response?.data?.field) {
-        setFieldError(
-          (error as any).response.data.field,
-          (error as any).response.data.message,
-        );
-      }
-    },
-  });
+  try {
+    await createCertificate(payload, {
+      onSuccess: async () => {
+        store.cache = {};
+        await store.fetchCertificates();
+        resetForm();
+        cpfSearch.value = '';
+        cidSearchTerm.value = '';
+        selectedCid.value = null;
+        clearCidSearch();
+        dialogOpen.value = false;
+        emit('saved');
+      },
+      onError: (error: unknown) => {
+        throw error;
+      },
+    });
+  } catch (error: any) {
+    if (error?.response?.data?.field) {
+      setFieldError(error.response.data.field, error.response.data.message);
+    }
+  }
 });
 
 function selectCid(option: CidOption) {
@@ -261,11 +266,18 @@ function clearCpfInput() {
 
 <template>
   <Dialog v-model:open="dialogOpen">
+    <DialogTrigger as-child>
+      <Button>Adicionar atestado</Button>
+    </DialogTrigger>
     <DialogContent
       class="w-full max-w-[95vw] sm:max-w-[800px] mx-auto my-4 p-4 rounded-lg bg-white shadow-lg max-h-[90vh] overflow-y-auto"
     >
       <DialogHeader>
         <DialogTitle>Adicionar novo atestado</DialogTitle>
+        <DialogDescription>
+          Preencha os campos abaixo para adicionar um novo atestado ao
+          colaborador selecionado.
+        </DialogDescription>
       </DialogHeader>
 
       <SearchCollaboratorCpf

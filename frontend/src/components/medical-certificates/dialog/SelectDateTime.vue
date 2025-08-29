@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { CalendarIcon, ClockIcon } from 'lucide-vue-next';
+import { CalendarIcon, ClockIcon, Info } from 'lucide-vue-next';
 import {
   Popover,
   PopoverContent,
@@ -38,6 +38,11 @@ import { applyTimeMask } from '@/utils/time-mask.utils';
 import { createDecade, createYear, toDate } from 'reka-ui/date';
 import dayjs from 'dayjs';
 import type { CertificateFormValues } from '@/schema/CertificateSchema';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const props = defineProps<{
   issueDate: string;
@@ -243,7 +248,18 @@ const formattedIssueDate = computed(() => {
     <div class="flex-1 min-w-0 max-md:w-full max-md:my-2">
       <FormField v-slot="{ componentField }" name="leaveDays">
         <FormItem>
-          <FormLabel>Dias de afastamento *</FormLabel>
+          <div class="flex items-center gap-2">
+            <FormLabel>Dias de afastamento *</FormLabel>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Info class="w-4 h-4 text-gray-400 cursor-pointer" />
+              </TooltipTrigger>
+              <TooltipContent class="font-semibold">
+                O empregado tem direito a se afastar do trabalho por até 15 dias
+                consecutivos, mediante a apresentação de atestado médico.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <FormControl>
             <Input
               type="number"
@@ -255,7 +271,7 @@ const formattedIssueDate = computed(() => {
             />
           </FormControl>
           <FormDescription>
-            Quantidade de dias de afastamento (1 a 365).
+            Quantidade de dias de afastamento (1 a 15).
           </FormDescription>
           <FormMessage />
         </FormItem>

@@ -1,210 +1,118 @@
 <script setup lang="ts">
-import { computed, h, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import {
   getCoreRowModel,
+  getSortedRowModel,
   useVueTable,
   type SortingState,
   type Updater,
 } from '@tanstack/vue-table';
-import { Button } from '@/components/ui/button';
 import AddCertificateDialog from '@/components/medical-certificates/AddCertificateDialog.vue';
-import { useMedicalCertificates } from '@/composables/useFetchCertificates';
 import Spinner from '@/components/ui/spinner/Spinner.vue';
-import PageSizeSelector from '@/components/medical-certificates/table/PageSizeSelector.vue';
-import MedialCertificationFilter from '@/components/medical-certificates/table/MedialCertificationFilter.vue';
+import MedicalCertificationFilter from '@/components/medical-certificates/table/MedicalCertificationFilter.vue';
 import CertificatesTable from '@/components/medical-certificates/table/CertificatesTable.vue';
 import PaginationCertificateTable from '@/components/medical-certificates/table/PaginationCertificateTable.vue';
 import type { Collaborator } from '@/interfaces/collaborator';
-import CidInfoTooltip from '@/components/medical-certificates/table/CidInfoTooltip.vue';
+import { getCertificateColumns } from '@/config/certificates.config';
+import { useCertificatesStore } from '@/stores/certificates.store';
+import type { AcceptableValue } from 'reka-ui';
 
-const { certificates, loading, error, total, fetchCertificates } =
-  useMedicalCertificates();
+const store = useCertificatesStore();
 
-const currentPage = ref(1);
-const pageSize = ref(10);
-const pageSizeOptions = [5, 10, 20];
-const searchInput = ref('');
-const sorting = ref<SortingState>([]);
-
-watch([currentPage, pageSize, sorting], () => {
-  let sortParam = '';
-  if (sorting.value.length && sorting.value[0].id === 'issueDate') {
-    sortParam = sorting.value[0].desc ? 'desc' : 'asc';
-  }
-  fetchCertificates({
-    page: currentPage.value,
-    limit: pageSize.value,
-    name: searchInput.value,
-    sort: sortParam,
-  });
+onMounted(() => {
+  store.setFilters({ page: 1, limit: 10 });
+  store.fetchCertificates();
 });
 
-const handleSearchInput = () => {
-  currentPage.value = 1;
-  fetchCertificates({
-    page: currentPage.value,
-    limit: pageSize.value,
-    name: searchInput.value,
-  });
-};
+const pageSizeOptions = [5, 10, 20];
+const sorting = ref<SortingState>([]);
+const addCertificateDialogOpen = ref(false);
+const selectedCollaborator = ref<Collaborator | undefined>(undefined);
+const searchLoading = computed(() => store.loading);
 
-const goToPage = (page: number) => {
-  if (page >= 1 && page <= Math.ceil(total.value / pageSize.value)) {
-    currentPage.value = page;
-  }
-};
-const goToFirstPage = () => goToPage(1);
-const goToNextPage = () => goToPage(currentPage.value + 1);
-const goToPrevPage = () => goToPage(currentPage.value - 1);
-const goToLastPage = () => goToPage(Math.ceil(total.value / pageSize.value));
-const changePageSize = (newSize: number) => {
-  pageSize.value = newSize;
-  currentPage.value = 1;
-};
-
-function parseCustomDate(dateStr: string) {
-  if (!dateStr) return null;
-  const [datePart, timePart] = dateStr.split(' - ');
-  const [day, month, year] = datePart.split('/');
-  const [hour, minute, second] = timePart ? timePart.split(':') : [0, 0, 0];
-  return new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hour),
-    Number(minute),
-    Number(second),
-  );
+function handlePageChange(newPage: number) {
+  store.setFilters({ page: newPage });
+  store.fetchCertificates();
 }
 
-const columns = [
-  {
-    accessorKey: 'name',
-    header: 'Nome do Colaborador',
-    cell: ({ row }: any) => row.getValue('name') || '-',
-    enableSorting: false,
-  },
-  {
-    id: 'cid',
-    header: 'CID',
-    enableSorting: false,
-    accessorFn: (row: any) => row.cid ?? [],
-    cell: ({ getValue }: any) => {
-      const cidArray = getValue() as { cidCode: string; cidDesc: string }[];
-      if (!cidArray || cidArray.length === 0) return h('span', '-');
-      return h(
-        'div',
-        {},
-        cidArray.map((c) =>
-          h(CidInfoTooltip, { cidCode: c.cidCode, cidDesc: c.cidDesc }),
-        ),
-      );
-    },
-  },
-  {
-    accessorKey: 'issueDate',
-    header: 'Data de Emissão',
-    enableSorting: true,
-    cell: ({ row }: any) => {
-      const value = row.getValue('issueDate');
-      const date = parseCustomDate(value);
-      return date && !isNaN(date.getTime())
-        ? date.toLocaleString('pt-BR')
-        : 'Data inválida';
-    },
-  },
-  {
-    accessorKey: 'leaveDays',
-    header: 'Dias de Afastamento',
-    cell: ({ row }: any) => row.getValue('leaveDays'),
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'observations',
-    header: 'Observações',
-    cell: ({ row }: any) => row.getValue('observations') || '-',
-    enableSorting: false,
-  },
-];
+function handlePageSizeChange(value: AcceptableValue) {
+  const newSize = Number(value);
+  if (!newSize) return;
+  store.setFilters({ limit: newSize, page: 1 });
+  store.fetchCertificates();
+}
 
-const sortedCertificates = computed(() => {
-  if (sorting.value.length && sorting.value[0].id === 'leaveDays') {
-    const direction = sorting.value[0].desc ? -1 : 1;
-    return [...certificates.value].sort((a, b) => {
-      return (a.leaveDays - b.leaveDays) * direction;
-    });
-  }
-  return certificates.value;
-});
+const columns = getCertificateColumns();
 
 function handleSortingChange(updater: SortingState | Updater<SortingState>) {
   const newSorting =
     typeof updater === 'function' ? updater(sorting.value) : updater;
   sorting.value = newSorting;
-  currentPage.value = 1;
 }
 
+const tableData = computed(() => store.certificates);
+
 const table = useVueTable({
-  data: sortedCertificates,
+  data: tableData,
   columns,
   getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
   state: {
     get sorting() {
       return sorting.value;
     },
   },
   onSortingChange: handleSortingChange,
-  manualSorting: true,
-});
-onMounted(() => {
-  fetchCertificates({
-    page: currentPage.value,
-    limit: pageSize.value,
-    name: searchInput.value,
-  });
+  manualSorting: false,
 });
 
-const addCertificateDialogOpen = ref(false);
-const selectedCollaborator = ref<Collaborator | undefined>(undefined);
+function handleUpdateSearchValue(value: string) {
+  store.setFilters({ name: value, page: 1 });
+  if (!value) {
+    store.fetchCertificates();
+  }
+}
 
-function openAddCertificateDialog(collaborator: Collaborator | undefined) {
-  selectedCollaborator.value = collaborator;
-  addCertificateDialogOpen.value = true;
+async function handleSearchCollaborator(name: string) {
+  store.setFilters({ name, page: 1 });
+  await store.fetchCertificates({ name });
+}
+
+async function handleFetchCollaborators() {
+  store.setFilters({ name: '', page: 1 });
+  await nextTick();
+  store.fetchCertificates();
 }
 </script>
 
 <template>
-  <div class="md:p-8">
-    <Spinner v-if="loading" />
-    <div v-else-if="error" class="text-red-500 text-center p-4">
-      {{ error }}
+  <main class="md:p-8">
+    <Spinner v-if="store.loading" />
+    <div v-else-if="store.error" class="text-red-500 text-center p-4">
+      {{ store.error }}
     </div>
-
     <div v-else>
-      <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-6"
-      >
-        <PageSizeSelector
-          :model-value="pageSize.toString()"
-          :options="pageSizeOptions"
-          :onChange="(value) => changePageSize(Number(value))"
-        />
-
-        <MedialCertificationFilter
-          :model-value="searchInput"
-          @update:modelValue="(val) => (searchInput = val)"
-          @search="handleSearchInput"
-        />
-
-        <Button
-          variant="default"
-          @click="openAddCertificateDialog(undefined)"
-          class="cursor-pointer whitespace-nowrap"
+      <div>
+        <MedicalCertificationFilter
+          :searchValue="store.filters.name"
+          :pageSize="store.filters.limit"
+          :pageSizeOptions="pageSizeOptions"
+          @update:searchValue="handleUpdateSearchValue"
+          @searchCollaborator="handleSearchCollaborator"
+          @fetchCollaborators="handleFetchCollaborators"
+          @update:pageSize="handlePageSizeChange"
         >
-          Adicionar Atestado
-        </Button>
+          <template #add-certificates>
+            <AddCertificateDialog
+              v-model:open="addCertificateDialogOpen"
+              :collaborator="selectedCollaborator"
+            />
+          </template>
+        </MedicalCertificationFilter>
+        <section v-if="searchLoading">
+          <Spinner />
+        </section>
       </div>
-
       <div class="rounded-md border overflow-hidden">
         <CertificatesTable
           :table="table"
@@ -213,27 +121,14 @@ function openAddCertificateDialog(collaborator: Collaborator | undefined) {
           :onSortingChange="handleSortingChange"
         />
       </div>
-
       <div class="flex flex-col sm:flex-row items-center gap-4 py-4">
         <PaginationCertificateTable
-          :currentPage="currentPage"
-          :totalPages="Math.ceil(total / pageSize)"
-          :goToFirstPage="goToFirstPage"
-          :goToPrevPage="goToPrevPage"
-          :goToNextPage="goToNextPage"
-          :goToLastPage="goToLastPage"
+          :total="store.total"
+          :pageSize="store.filters.limit"
+          :model-value="store.filters.page"
+          @update:modelValue="handlePageChange"
         />
-        <div class="flex justify-end">
-          <h1 class="text-muted-foreground whitespace-nowrap">
-            Total: {{ total }}
-          </h1>
-        </div>
       </div>
     </div>
-
-    <AddCertificateDialog
-      v-model:open="addCertificateDialogOpen"
-      :collaborator="selectedCollaborator"
-    />
-  </div>
+  </main>
 </template>

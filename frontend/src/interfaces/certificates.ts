@@ -5,3 +5,12 @@ export interface Certificate {
   cidCode: string;
   observations?: string;
 }
+
+export interface MedicalCertificate {
+  collaboratorId: string;
+  collaboratorName?: string;
+  cidCode: string;
+  issueDate: string;
+  leaveDays: number;
+  observations: string;
+}

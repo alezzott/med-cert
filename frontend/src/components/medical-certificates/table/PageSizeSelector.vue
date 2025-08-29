@@ -1,25 +1,21 @@
 <template>
-  <section>
-    <div class="flex items-center space-x-2">
-      <span class="text-sm text-muted-foreground whitespace-nowrap"
-        >Itens por página:</span
-      >
-      <Select :model-value="modelValue" @update:model-value="onChange">
-        <SelectTrigger class="w-20 bg-white">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem
-            v-for="size in options"
-            :key="size"
-            :value="size.toString()"
-          >
-            {{ size }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  </section>
+  <label for="pageSize" class="text-sm text-muted-foreground whitespace-nowrap">
+    Itens por página:
+  </label>
+  <Select
+    :model-value="modelValue"
+    @update:model-value="onChange"
+    aria-label="Selecionar quantidade de itens por página"
+  >
+    <SelectTrigger class="w-20 bg-white">
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem v-for="size in options" :key="size" :value="size.toString()">
+        {{ size }}
+      </SelectItem>
+    </SelectContent>
+  </Select>
 </template>
 
 <script setup lang="ts">

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
+import type { Collaborator } from '@/interfaces/collaborator';
 import { X, Search, Loader2 } from 'lucide-vue-next';
 
 defineProps<{
   value: string;
   error?: string;
-  collaborator?: any[];
+  collaborator?: Collaborator[];
   loading?: boolean;
 }>();
 

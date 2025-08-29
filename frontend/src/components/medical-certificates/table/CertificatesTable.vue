@@ -42,17 +42,23 @@
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
                 <template v-if="cell.column.id === 'observations'">
                   <template v-if="row.getValue('observations')">
-                    <article class="flex flex-row gap-4 items-center">
+                    <article class="flex flex-row items-center">
                       <h1>
                         {{
-                          (row.getValue('observations') as string).slice(
-                            0,
-                            100,
-                          )
-                        }}...
+                          (row.getValue('observations') as string).length > 100
+                            ? (row.getValue('observations') as string).slice(
+                                0,
+                                100,
+                              ) + '...'
+                            : row.getValue('observations')
+                        }}
                       </h1>
                       <Button
+                        v-if="
+                          (row.getValue('observations') as string).length > 100
+                        "
                         variant="link"
+                        class="ml-auto"
                         @click="openDialog(row.getValue('observations'))"
                       >
                         Ver mais
@@ -160,18 +166,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { MedicalCertificate } from '@/composables/useFetchCertificates';
 
 type CertificateCid = { cidCode: string; [key: string]: any };
 import {
   FlexRender,
-  type Table as TanTable,
+  type Table as TanstackTable,
   type ColumnDef,
   type SortingState,
   type Updater,
 } from '@tanstack/vue-table';
 import { ref } from 'vue';
 import ObservationDetailDialog from '../dialog/ObservationDetailDialog.vue';
+import type { Certificate } from '@/interfaces/certificates';
 
 const dialogOpen = ref(false);
 const dialogText = ref('');
@@ -185,8 +191,8 @@ function closeDialog() {
 }
 
 defineProps<{
-  table: TanTable<MedicalCertificate>;
-  columns: ColumnDef<any, unknown>[];
+  table: TanstackTable<Certificate>;
+  columns: ColumnDef<Certificate, string>[];
   sorting?: SortingState;
   onSortingChange?: (updater: SortingState | Updater<SortingState>) => void;
 }>();

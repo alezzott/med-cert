@@ -1,13 +1,7 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import { toast } from 'vue-sonner';
-
-interface Collaborator {
-  id: string;
-  name: string;
-  cpf: string;
-  email?: string;
-}
+import type { Collaborator } from '@/interfaces/collaborator';
 
 export function useCollaboratorSearch() {
   const searchValue = ref('');
