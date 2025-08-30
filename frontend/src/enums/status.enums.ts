@@ -3,7 +3,8 @@ export const CollaboratorStatus = {
   INACTIVE: 'INACTIVE',
 } as const;
 
-export type CollaboratorStatus = typeof CollaboratorStatus[keyof typeof CollaboratorStatus];
+export type CollaboratorStatus =
+  (typeof CollaboratorStatus)[keyof typeof CollaboratorStatus];
 
 export function translateStatus(status: CollaboratorStatus) {
   switch (status) {
