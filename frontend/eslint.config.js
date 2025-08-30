@@ -1,4 +1,5 @@
 import vue from 'eslint-plugin-vue';
+import vueParser from 'vue-eslint-parser'; 
 import typescript from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
@@ -23,6 +24,14 @@ export default [
   },
   {
     files: ['**/*.vue'],
+     languageOptions: {
+      parser: vueParser, 
+      parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: 'module',
+        parser: tsParser,
+      },
+    },
     plugins: {
       vue,
       prettier,
